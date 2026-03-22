@@ -1,786 +1,1405 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Intersection Podcast â Dashboard</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <style>
-    :root {
-      --bg-primary: #0d1117;
-      --bg-secondary: #161b22;
-      --bg-card: #1c2128;
-      --bg-card2: #21262d;
-      --border: #30363d;
-      --text-primary: #e6edf3;
-      --text-secondary: #8b949e;
-      --text-muted: #484f58;
-      --spotify: #1db954;
-      --youtube: #ff4444;
-      --tiktok-c: #00f2ea;
-      --tiktok-p: #ff0050;
-      --accent: #58a6ff;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intersection — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ── RESET & BASE ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ââ HEADER ââ */
-    .header {
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(8px);
-    }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .logo {
-      width: 38px; height: 38px;
-      background: linear-gradient(135deg, #00f2ea 0%, #7b2ff7 50%, #ff0050 100%);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; font-weight: 900; color: #fff;
-      letter-spacing: -1px;
-      flex-shrink: 0;
-    }
-    .header h1 { font-size: 17px; font-weight: 700; line-height: 1.2; }
-    .header h1 span { color: var(--text-secondary); font-weight: 400; }
-    .header-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-    .header-right { display: flex; align-items: center; gap: 14px; }
-    .last-updated { font-size: 11px; color: var(--text-muted); }
-    .refresh-btn {
-      background: var(--accent); color: #0d1117;
-      border: none; padding: 8px 16px;
-      border-radius: 6px; font-size: 13px; font-weight: 700;
-      cursor: pointer; display: flex; align-items: center; gap: 6px;
-      transition: opacity 0.15s, transform 0.1s;
-    }
-    .refresh-btn:hover { opacity: 0.85; }
-    .refresh-btn:active { transform: scale(0.97); }
-    .refresh-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .spin { display: inline-block; }
-    .spin.active { animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+:root {
+  --bg:        #0c0c14;
+  --bg2:       #12121f;
+  --bg3:       #1a1a2e;
+  --card:      #16162a;
+  --border:    rgba(255,255,255,0.07);
+  --text:      #e8e8f0;
+  --text2:     #8888aa;
+  --accent:    #7c3aed;
+  --accent2:   #a855f7;
+  --green:     #22c55e;
+  --red:       #ef4444;
+  --yt:        #ff0000;
+  --spotify:   #1db954;
+  --tiktok:    #ee1d52;
+  --instagram: #e1306c;
+  --apple:     #fc3c44;
+  --facebook:  #1877f2;
+  --sheets:    #0f9d58;
+  --radius:    14px;
+  --shadow:    0 4px 24px rgba(0,0,0,0.4);
+}
 
-    /* ââ SETUP ALERT ââ */
-    .setup-alert {
-      background: #1c2128; border: 1px solid #e3b341;
-      border-radius: 8px; padding: 14px 18px;
-      margin: 20px 28px 0;
-      display: flex; gap: 12px; align-items: flex-start;
-    }
-    .setup-alert.hidden { display: none; }
-    .setup-alert h3 { font-size: 13px; font-weight: 600; color: #e3b341; margin-bottom: 6px; }
-    .setup-alert p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
-    .setup-alert code {
-      background: #0d1117; padding: 1px 5px; border-radius: 3px;
-      font-family: monospace; color: var(--accent); font-size: 11px;
-    }
-    .setup-alert-close {
-      margin-left: auto; background: none; border: none;
-      color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 0 4px;
-      flex-shrink: 0;
-    }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
 
-    /* ââ MAIN ââ */
-    .main { padding: 22px 28px; max-width: 1440px; margin: 0 auto; }
+/* ── SCROLLBAR ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
 
-    /* ââ SECTION LABELS ââ */
-    .section-label {
-      font-size: 11px; font-weight: 700; letter-spacing: 0.9px;
-      text-transform: uppercase; color: var(--text-muted);
-      margin-bottom: 12px; margin-top: 4px;
-    }
+/* ── LAYOUT ───────────────────────────────────────────────── */
+.wrapper { max-width: 1280px; margin: 0 auto; padding: 0 20px 60px; }
 
-    /* ââ HERO CARDS ââ */
-    .hero-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px; margin-bottom: 20px;
-    }
-    .hero-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px; padding: 18px 20px;
-      position: relative; overflow: hidden;
-      transition: border-color 0.2s;
-    }
-    .hero-card:hover { border-color: #484f58; }
-    .hero-card::after {
-      content: ''; position: absolute;
-      top: 0; left: 0; right: 0; height: 2.5px;
-      border-radius: 10px 10px 0 0;
-    }
-    .hero-card.sp::after  { background: var(--spotify); }
-    .hero-card.yt::after  { background: var(--youtube); }
-    .hero-card.tt::after  { background: linear-gradient(90deg, var(--tiktok-c), var(--tiktok-p)); }
-    .hero-card.bl::after  { background: var(--accent); }
-    .hero-label {
-      font-size: 11px; color: var(--text-secondary);
-      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
-    }
-    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .dot.sp  { background: var(--spotify); }
-    .dot.yt  { background: var(--youtube); }
-    .dot.tt  { background: var(--tiktok-p); }
-    .dot.acc { background: var(--accent); }
-    .hero-value {
-      font-size: 38px; font-weight: 800;
-      letter-spacing: -2px; line-height: 1;
-      margin-bottom: 6px;
-    }
-    .hero-value.sp  { color: var(--spotify); }
-    .hero-value.yt  { color: var(--youtube); }
-    .hero-value.tt  { color: var(--tiktok-c); }
-    .hero-value.acc { color: var(--accent); }
-    .hero-sub { font-size: 11px; color: var(--text-muted); }
+/* ── HEADER ───────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 0 28px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
 
-    /* ââ CHART CONTAINERS ââ */
-    .chart-box {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 10px; padding: 18px 20px;
-      margin-bottom: 18px;
-    }
-    .chart-head {
-      display: flex; justify-content: space-between;
-      align-items: flex-start; margin-bottom: 14px;
-    }
-    .chart-title { font-size: 14px; font-weight: 600; }
-    .chart-sub { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
-    .canvas-wrap { position: relative; height: 220px; }
-    .canvas-wrap.sm { height: 180px; }
-    .canvas-wrap.xs { height: 130px; }
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 
-    /* ââ PLATFORM GRID ââ */
-    .plat-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px; margin-bottom: 20px;
-    }
-    .plat-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 10px; overflow: hidden;
-    }
-    .plat-head {
-      padding: 13px 16px; display: flex;
-      align-items: center; gap: 10px;
-      border-bottom: 1px solid var(--border);
-    }
-    .plat-head.sp { background: rgba(29,185,84,0.07); }
-    .plat-head.yt { background: rgba(255,68,68,0.07); }
-    .plat-head.tt { background: rgba(0,242,234,0.05); }
-    .plat-icon {
-      width: 30px; height: 30px; border-radius: 7px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 800; flex-shrink: 0;
-    }
-    .plat-icon.sp { background: var(--spotify); color: #000; }
-    .plat-icon.yt { background: var(--youtube); color: #fff; }
-    .plat-icon.tt { background: #000; color: var(--tiktok-c); border: 1px solid var(--tiktok-c); }
-    .plat-name { font-size: 14px; font-weight: 700; }
-    .badge {
-      margin-left: auto; padding: 3px 9px; border-radius: 20px;
-      font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
-    }
-    .badge.sp { background: rgba(29,185,84,0.15); color: var(--spotify); }
-    .badge.yt { background: rgba(255,68,68,0.15); color: var(--youtube); }
-    .badge.tt { background: rgba(0,242,234,0.12); color: var(--tiktok-c); }
-    .plat-body { padding: 14px 16px; }
+.logo-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 0 20px rgba(124,58,237,0.3);
+}
 
-    /* ââ METRIC ROWS ââ */
-    .m-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.035);
-    }
-    .m-row:last-child { border-bottom: none; }
-    .m-lbl {
-      font-size: 12px; color: var(--text-secondary);
-      display: flex; align-items: center; gap: 6px; flex: 1;
-    }
-    .m-period {
-      background: rgba(255,255,255,0.06); padding: 1px 5px;
-      border-radius: 3px; font-size: 10px; color: var(--text-muted);
-    }
-    .m-val { font-size: 14px; font-weight: 600; }
-    .m-val.sp  { color: var(--spotify); }
-    .m-val.yt  { color: var(--youtube); }
-    .m-val.tt  { color: var(--tiktok-c); }
-    .m-val.acc { color: var(--accent); }
-    .divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 12px 0; }
-    .sub-title {
-      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
-      text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;
-    }
+.logo h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
 
-    /* ââ RANK / TABLE ââ */
-    .rank-item {
-      display: flex; align-items: flex-start;
-      gap: 8px; padding: 6px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-    }
-    .rank-item:last-child { border-bottom: none; }
-    .rn {
-      min-width: 20px; height: 20px; background: rgba(255,255,255,0.07);
-      border-radius: 4px; font-size: 10px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--text-secondary); flex-shrink: 0; margin-top: 1px;
-    }
-    .rank-title {
-      font-size: 12px; color: var(--text-primary);
-      flex: 1; line-height: 1.4;
-      overflow: hidden;
-    }
-    .rank-val {
-      font-size: 12px; font-weight: 700;
-      text-align: right; flex-shrink: 0; white-space: nowrap;
-    }
-    .rank-val-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+.logo .subtitle {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 2px;
+}
 
-    /* ââ GENDER BAR ââ */
-    .g-bar-track {
-      height: 6px; border-radius: 3px;
-      background: var(--tiktok-p); margin: 6px 0 10px; overflow: hidden;
-    }
-    .g-bar-fill {
-      height: 100%; border-radius: 3px;
-      background: var(--tiktok-c); transition: width 0.6s ease;
-    }
-    .g-labels {
-      display: flex; justify-content: space-between;
-      font-size: 11px; color: var(--text-secondary);
-    }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
-    /* ââ EPISODES FULL TABLE ââ */
-    .ep-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .ep-table th {
-      text-align: left; color: var(--text-muted); font-weight: 600;
-      padding: 6px 8px 6px 0; border-bottom: 1px solid var(--border);
-      font-size: 11px; letter-spacing: 0.3px; white-space: nowrap;
-    }
-    .ep-table td {
-      padding: 7px 8px 7px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      color: var(--text-secondary);
-    }
-    .ep-table tr:last-child td { border-bottom: none; }
-    .ep-table tr:hover td { background: rgba(255,255,255,0.015); }
-    .ep-name { color: var(--text-primary); max-width: 320px; }
-    .ep-num { text-align: right; font-weight: 700; color: var(--text-primary); }
-    .fmt-badge {
-      display: inline-block; padding: 1px 6px; border-radius: 10px;
-      font-size: 10px; font-weight: 600;
-    }
-    .fmt-video { background: rgba(255,68,68,0.15); color: var(--youtube); }
-    .fmt-audio { background: rgba(29,185,84,0.12); color: var(--spotify); }
+.last-updated {
+  font-size: 12px;
+  color: var(--text2);
+}
 
-    /* ââ LOADING / ERROR ââ */
-    .loading {
-      display: flex; align-items: center; justify-content: center;
-      min-height: 60px; color: var(--text-muted); font-size: 12px; gap: 8px;
-    }
-    .err-msg {
-      text-align: center; color: var(--text-muted); font-size: 12px;
-      padding: 16px; line-height: 1.5;
-    }
+.dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text2);
+  margin-right: 5px;
+  animation: pulse 2s infinite;
+}
+.dot.live { background: var(--green); }
 
-    /* ââ FOOTER ââ */
-    .footer {
-      text-align: center; padding: 22px 28px;
-      border-top: 1px solid var(--border);
-      color: var(--text-muted); font-size: 11px; margin-top: 8px;
-    }
-    .footer a { color: var(--accent); text-decoration: none; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
 
-    /* ââ RESPONSIVE ââ */
-    @media (max-width: 1000px) {
-      .hero-grid { grid-template-columns: repeat(2, 1fr); }
-      .plat-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 600px) {
-      .hero-grid { grid-template-columns: 1fr 1fr; }
-      .main { padding: 14px 14px; }
-      .header { padding: 12px 14px; }
-    }
-  </style>
+/* ── BUTTONS ──────────────────────────────────────────────── */
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  box-shadow: 0 0 16px rgba(124,58,237,0.3);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.45); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--card); color: var(--text); }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── OVERVIEW STRIP ───────────────────────────────────────── */
+.overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 28px 0;
+}
+
+.ov-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ov-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--color, var(--accent)) 0%, transparent 60%);
+  opacity: 0.06;
+}
+
+.ov-label {
+  font-size: 11px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 5px;
+}
+
+.ov-value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--text);
+}
+
+.ov-sub {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 4px;
+}
+
+/* ── SECTION TITLE ────────────────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  margin-top: 32px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── PLATFORM GRID ────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: rgba(255,255,255,0.12); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(to right, rgba(255,255,255,0.02), transparent);
+}
+
+.platform-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.card-header .name {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.card-header .handle {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.badge {
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-live { background: rgba(34,197,94,0.15); color: var(--green); }
+.badge-manual { background: rgba(136,136,170,0.15); color: var(--text2); }
+.badge-soon { background: rgba(124,58,237,0.15); color: var(--accent2); }
+.badge-error { background: rgba(239,68,68,0.15); color: var(--red); }
+
+.card-body { padding: 16px 18px; }
+
+/* ── STAT ROW ─────────────────────────────────────────────── */
+.stat-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.stat {
+  flex: 1;
+  min-width: 90px;
+  background: var(--bg2);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.stat-val {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.stat-lbl {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+/* ── RECENT ITEMS LIST ────────────────────────────────────── */
+.recent-list { display: flex; flex-direction: column; gap: 8px; }
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg2);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.recent-item:hover { background: var(--bg3); }
+
+.recent-thumb {
+  width: 44px; height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg3);
+}
+
+.recent-info { flex: 1; min-width: 0; }
+.recent-title {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recent-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+.recent-views {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  white-space: nowrap;
+}
+
+/* ── MANUAL ENTRY ─────────────────────────────────────────── */
+.manual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.input-group { display: flex; flex-direction: column; gap: 5px; }
+.input-group label { font-size: 11px; color: var(--text2); }
+.input-group input {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.input-group input:focus { outline: none; border-color: var(--accent); }
+.input-group input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.save-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* ── NOTE / ALERT ─────────────────────────────────────────── */
+.note {
+  font-size: 11px;
+  color: var(--text2);
+  background: rgba(136,136,170,0.07);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 10px;
+  display: flex; align-items: flex-start; gap: 6px;
+}
+
+.error-msg {
+  font-size: 12px;
+  color: var(--red);
+  background: rgba(239,68,68,0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ── SETUP MODAL ──────────────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.overlay.open { display: flex; }
+
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+
+.modal h2 { font-size: 20px; margin-bottom: 6px; }
+.modal .desc { font-size: 13px; color: var(--text2); margin-bottom: 22px; }
+
+.setup-section { margin-bottom: 20px; }
+
+.setup-section h3 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
+}
+
+.setup-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.setup-field label { font-size: 12px; color: var(--text2); }
+.setup-field input {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  transition: border-color 0.2s;
+}
+.setup-field input:focus { outline: none; border-color: var(--accent); }
+
+.how-to {
+  font-size: 11px;
+  color: var(--accent2);
+  margin-top: 4px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── LOADING SKELETON ─────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ── CHART CONTAINER ──────────────────────────────────────── */
+.chart-wrap { position: relative; height: 120px; margin-top: 12px; }
+
+/* ── SHEETS BADGE ─────────────────────────────────────────── */
+.badge-sheets { background: rgba(15,157,88,0.15); color: var(--sheets); }
+
+/* ── EPISODES TABLE ───────────────────────────────────────── */
+.ep-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+.ep-table th {
+  text-align: left; padding: 6px 8px;
+  color: var(--text2); font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px;
+}
+.ep-table td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.ep-table tr:last-child td { border-bottom: none; }
+.ep-table tr:hover td { background: var(--bg2); }
+.ep-plays { font-weight: 700; color: var(--spotify); }
+
+/* ── STAT PILL ────────────────────────────────────────────── */
+.stat-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--bg2); border-radius: 20px;
+  padding: 4px 10px; font-size: 12px; margin: 3px 3px 3px 0;
+}
+.stat-pill .pill-val { font-weight: 700; }
+.stat-pill .pill-lbl { color: var(--text2); font-size: 11px; }
+
+/* ── SHEETS SOURCE TAG ────────────────────────────────────── */
+.source-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; color: var(--sheets); opacity: 0.8;
+  margin-top: 6px;
+}
+
+/* ── SEPARATOR ────────────────────────────────────────────── */
+.sep {
+  height: 1px;
+  background: var(--border);
+  margin: 12px 0;
+}
+
+/* ── FOOTER ───────────────────────────────────────────────── */
+footer {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--text2);
+  font-size: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
+  .overview { grid-template-columns: repeat(2, 1fr); }
+  header { flex-direction: column; align-items: flex-start; }
+}
+</style>
 </head>
 <body>
 
-<!-- ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-     HEADER
-ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
-<header class="header">
-  <div class="header-left">
-    <div class="logo">IÃ</div>
-    <div>
-      <h1>Intersection <span>Podcast</span></h1>
-      <div class="header-sub">Stats Dashboard</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <div class="last-updated" id="lastUpdated">â En attente</div>
-    <button class="refresh-btn" id="refreshBtn" onclick="loadAllData()">
-      <span class="spin" id="spinIcon">â»</span> RafraÃ®chir
-    </button>
-  </div>
-</header>
+<div class="wrapper">
 
-<!-- ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-     SETUP ALERT
-ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
-<div class="setup-alert hidden" id="setupAlert">
-  <span style="font-size:18px;">â ï¸</span>
-  <div>
-    <h3>Configuration requise â DonnÃ©es non accessibles</h3>
-    <p>
-      Pour charger les donnÃ©es en temps rÃ©el, le Google Sheet doit Ãªtre <strong>publiÃ© sur le web</strong>.<br>
-      Dans Google Sheets : <strong>Fichier â Partager â Publier sur le web</strong>
-      â sÃ©lectionner chaque onglet â format <code>CSV</code> â cliquer <strong>Publier</strong>.<br>
-      Ou rendre le sheet accessible : <strong>Partager â Toute personne avec le lien peut voir</strong>,
-      puis relancer ce fichier depuis Chrome (si connectÃ© Ã  Google).
-    </p>
-  </div>
-  <button class="setup-alert-close" onclick="this.parentElement.classList.add('hidden')">â</button>
-</div>
-
-<!-- ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-     MAIN
-ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
-<main class="main">
-
-  <!-- ââ HERO METRICS ââ -->
-  <div class="section-label">ð MÃ©triques clÃ©s</div>
-  <div class="hero-grid">
-    <div class="hero-card sp">
-      <div class="hero-label"><span class="dot sp"></span>Spotify â Plays all-time</div>
-      <div class="hero-value sp" id="h-sp-plays">â</div>
-      <div class="hero-sub" id="h-sp-plays-sub">chargementâ¦</div>
-    </div>
-    <div class="hero-card yt">
-      <div class="hero-label"><span class="dot yt"></span>YouTube â AbonnÃ©s</div>
-      <div class="hero-value yt" id="h-yt-subs">â</div>
-      <div class="hero-sub" id="h-yt-subs-sub">chargementâ¦</div>
-    </div>
-    <div class="hero-card tt">
-      <div class="hero-label"><span class="dot tt"></span>TikTok â Followers</div>
-      <div class="hero-value tt" id="h-tt-fol">â</div>
-      <div class="hero-sub" id="h-tt-fol-sub">chargementâ¦</div>
-    </div>
-    <div class="hero-card bl">
-      <div class="hero-label"><span class="dot acc"></span>Spotify â Followers</div>
-      <div class="hero-value acc" id="h-sp-fol">â</div>
-      <div class="hero-sub" id="h-sp-fol-sub">chargementâ¦</div>
-    </div>
-  </div>
-
-  <!-- ââ TIME SERIES CHART ââ -->
-  <div class="chart-box">
-    <div class="chart-head">
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🎙️</div>
       <div>
-        <div class="chart-title">ð Ãvolution des audiences dans le temps</div>
-        <div class="chart-sub">DonnÃ©es accumulÃ©es quotidiennementâle graphique sera de plus en plus riche</div>
+        <h1>Intersection</h1>
+        <div class="subtitle">Dashboard de rayonnement <span style="opacity:0.4;font-size:11px">v1.1</span></div>
       </div>
     </div>
-    <div class="canvas-wrap" id="timeseriesWrap">
-      <canvas id="chartTimeseries"></canvas>
+    <div class="header-right">
+      <span class="last-updated">
+        <span class="dot" id="statusDot"></span>
+        <span id="lastUpdated">Jamais mis à jour</span>
+      </span>
+      <button class="btn btn-ghost" onclick="openSetup()">⚙️ Configurer</button>
+      <button class="btn btn-primary" id="refreshBtn" onclick="refreshAll()">
+        <span id="refreshIcon">↻</span> Actualiser
+      </button>
+    </div>
+  </header>
+
+  <!-- ── OVERVIEW ────────────────────────────────────────── -->
+  <div class="overview">
+    <div class="ov-card" style="--color: var(--yt)">
+      <div class="ov-label">▶ Abonnés YouTube</div>
+      <div class="ov-value" id="ov-yt-subs">—</div>
+      <div class="ov-sub" id="ov-yt-views">— vues totales</div>
+    </div>
+    <div class="ov-card" style="--color: var(--spotify)">
+      <div class="ov-label">🎵 Épisodes Spotify</div>
+      <div class="ov-value" id="ov-sp-eps">—</div>
+      <div class="ov-sub" id="ov-sp-name">Intersection</div>
+    </div>
+    <div class="ov-card" style="--color: var(--tiktok)">
+      <div class="ov-label">♪ TikTok</div>
+      <div class="ov-value" id="ov-tt-followers">—</div>
+      <div class="ov-sub">Abonnés</div>
+    </div>
+    <div class="ov-card" style="--color: var(--instagram)">
+      <div class="ov-label">📸 Instagram</div>
+      <div class="ov-value" id="ov-ig-followers">—</div>
+      <div class="ov-sub">Abonnés</div>
+    </div>
+    <div class="ov-card" style="--color: var(--apple)">
+      <div class="ov-label">🍎 Apple Podcasts</div>
+      <div class="ov-value" id="ov-ap-eps">—</div>
+      <div class="ov-sub">Épisodes indexés</div>
+    </div>
+    <div class="ov-card" style="--color: var(--facebook)">
+      <div class="ov-label">👥 Facebook</div>
+      <div class="ov-value" id="ov-fb-followers">—</div>
+      <div class="ov-sub">Abonnés/Fans</div>
     </div>
   </div>
 
-  <!-- ââ COMPARATIVE CHART ââ -->
-  <div class="chart-box">
-    <div class="chart-head">
+  <!-- ── AUTO PLATFORMS ──────────────────────────────────── -->
+  <div class="section-header">
+    <span class="section-title">Plateformes automatiques</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- YOUTUBE -->
+    <div class="card">
+      <div class="card-header">
+        <div class="platform-icon" style="background:rgba(255,0,0,0.15)">▶️</div>
+        <div>
+          <div class="name">YouTube</div>
+          <div class="handle">@podcast-intersection</div>
+        </div>
+        <span class="badge badge-live" id="yt-badge">Live</span>
+      </div>
+      <div class="card-body" id="yt-body">
+        <div class="error-msg" id="yt-nocfg">
+          🔑 Clé API YouTube requise —
+          <span style="color:var(--accent2);cursor:pointer;text-decoration:underline;margin-left:4px" onclick="openSetup()">Configurer</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPOTIFY -->
+    <div class="card">
+      <div class="card-header">
+        <div class="platform-icon" style="background:rgba(29,185,84,0.15)">🎵</div>
+        <div>
+          <div class="name">Spotify</div>
+          <div class="handle">Intersection Podcast</div>
+        </div>
+        <span class="badge badge-live" id="sp-badge">Live</span>
+      </div>
+      <div class="card-body" id="sp-body">
+        <div class="error-msg" id="sp-nocfg">
+          🔑 Client ID/Secret Spotify requis —
+          <span style="color:var(--accent2);cursor:pointer;text-decoration:underline;margin-left:4px" onclick="openSetup()">Configurer</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPLE PODCASTS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="platform-icon" style="background:rgba(252,60,68,0.15)">🍎</div>
+        <div>
+          <div class="name">Apple Podcasts</div>
+          <div class="handle">intersection.podcast</div>
+        </div>
+        <span class="badge badge-live">Live</span>
+      </div>
+      <div class="card-body" id="ap-body">
+        <div class="skeleton" style="height:60px"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── GOOGLE SHEETS ────────────────────────────────────── -->
+  <div class="section-header" style="margin-top:32px">
+    <span class="section-title">Google Sheets — Stats détaillées</span>
+    <span style="font-size:12px;color:var(--text2)">Mis à jour depuis ton sheet Intersection Podcast</span>
+  </div>
+
+  <div class="grid" id="sheets-grid">
+    <!-- Spotify Plays (from sheet) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="platform-icon" style="background:rgba(29,185,84,0.15)">🎵</div>
+        <div>
+          <div class="name">Spotify — Plays</div>
+          <div class="handle">Données non disponibles via API publique</div>
+        </div>
+        <span class="badge badge-sheets" id="sh-sp-badge">Sheet</span>
+      </div>
+      <div class="card-body" id="sh-spotify-body">
+        <div class="skeleton" style="height:70px"></div>
+      </div>
+    </div>
+
+    <!-- YouTube enrichi (from sheet) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="platform-icon" style="background:rgba(255,0,0,0.15)">▶️</div>
+        <div>
+          <div class="name">YouTube — Stats détaillées</div>
+          <div class="handle">Watch time, vues podcast, realtime</div>
+        </div>
+        <span class="badge badge-sheets" id="sh-yt-badge">Sheet</span>
+      </div>
+      <div class="card-body" id="sh-youtube-body">
+        <div class="skeleton" style="height:70px"></div>
+      </div>
+    </div>
+
+    <!-- TikTok (from sheet) -->
+    <div class="card">
+      <div class="card-header">
+        <div class="platform-icon" style="background:rgba(238,29,82,0.15)">♪</div>
+        <div>
+          <div class="name">TikTok — Stats détaillées</div>
+          <div class="handle">@intersectionpodcast</div>
+        </div>
+        <span class="badge badge-sheets" id="sh-tt-badge">Sheet</span>
+      </div>
+      <div class="card-body" id="sh-tiktok-body">
+        <div class="skeleton" style="height:70px"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Top Épisodes -->
+  <div class="card" style="margin-top:16px" id="sh-episodes-card">
+    <div class="card-header">
+      <div class="platform-icon" style="background:rgba(15,157,88,0.15)">📊</div>
       <div>
-        <div class="chart-title">ð CAÛÛ\\]Y]YÜY\È8 %ÛÝÙ\È	[\ÈXÛ°ê\ÏÙ]]Û\ÜÏHÚ\\ÝX]YY[ÙHXÝY[H\]YÜYOÙ]Ù]Ù]]Û\ÜÏHØ[\Ë]Ü\ÛHØ[\ÈYHÚ\ÛÛ\\]]HØØ[\ÏÙ]Ù]KKH8¥ 8¥ UÔHÑPÕSÓÈ8¥ 8¥ KO]Û\ÜÏHÙXÝ[Û[X[¼'ã¦{î#È\ÜX[Ù\È\]YÜYOÙ]]Û\ÜÏH]YÜYKKHÔÕQHKO]Û\ÜÏH]XØ\]Û\ÜÏH]ZXYÜ]Û\ÜÏH]ZXÛÛÜ¸¦jÙ]Ü[Û\ÜÏH][[YHÜÝYOÜÜ[Ü[Û\ÜÏHYÙHÜYHYÙK\Ü¸ %ÜÜ[Ù]]Û\ÜÏH]XÙH]YHÜÝYK[Y]XÜÈ]Û\ÜÏHØY[È¸§ìÈÚ\Ù[Y[8 )Ù]Ù]Û\ÜÏH]Y\]Û\ÜÏHÝX]]H¼'ãáÜ0ê\\ÛÙ\È
-^\ÊOÙ]]YHÜÝYK]Ü]Û\ÜÏHØY[È¸§ìÏÙ]Ù]]Û\ÜÏHØ[\Ë]Ü\ÈÝ[OHX\Ú[]ÜLÈØ[\ÈYHÚ\ÜÝYQ\ØØ[\ÏÙ]Ù]Ù]KKHSÕUPHKO]Û\ÜÏH]XØ\]Û\ÜÏH]ZXY]]Û\ÜÏH]ZXÛÛ]¸¥­Ù]Ü[Û\ÜÏH][[YH[ÝUXOÜÜ[Ü[Û\ÜÏHYÙH]YHYÙK^]¸ %ÜÜ[Ù]]Û\ÜÏH]XÙH]YH[Ý]XK[Y]XÜÈ]Û\ÜÏHØY[È¸§ìÈÚ\Ù[Y[8 )Ù]Ù]Û\ÜÏH]Y\]Û\ÜÏHÝX]]H¼'ã«ÜY0ê[ÜÈ
-Ý\ÊOÙ]]YH[Ý]XK]Ü]Û\ÜÏHØY[È¸§ìÏÙ]Ù]]Û\ÜÏHØ[\Ë]Ü\ÈÝ[OHX\Ú[]ÜLÈØ[\ÈYHÚ\[Ý]XHØØ[\ÏÙ]Ù]Ù]KKHRÕÒÈKO]Û\ÜÏH]XØ\]Û\ÜÏH]ZXY]Û\ÜÏH]ZXÛÛÙ]Ü[Û\ÜÏH][[YHZÕÚÏÜÜ[Ü[Û\ÜÏHYÙHYHYÙK]¸ %ÜÜ[Ù]]Û\ÜÏH]XÙH]YHZÝÚË[Y]XÜÈ]Û\ÜÏHØY[È¸§ìÈÚ\Ù[Y[8 )Ù]Ù]Û\ÜÏH]Y\]Û\ÜÏHÝX]]H¼'äiH]YY[ÙH8 %Ù[OÙ]]YHZÝÚËYÙ[\]Û\ÜÏHØY[È¸§ìÏÙ]Ù]Û\ÜÏH]Y\]Û\ÜÏHÝX]]H¼'å)HÜY0ê[ÜÏÙ]]YHZÝÚË]Ü]Û\ÜÏHØY[È¸§ìÏÙ]Ù]Ù]Ù]Ù]KKH8¥ 8¥ STTÓÑTÈPH8¥ 8¥ KO]Û\ÜÏHÚ\XÞÝ[OHX\Ú[XÝÛNÈ]Û\ÜÏHÚ\ZXY]]Û\ÜÏHÚ\]]H¼'äâÈÝ\È\È0ê\\ÛÙ\ÈÜÝYOÙ]]Û\ÜÏHÚ\\ÝXÛ\Üðê\È\ÛXHH^\È0­È\[Û\ÏÙ]Ù]Ù]]Ý[OHÝ\ÝË^]]ÎÈXHÛ\ÜÏH\]XHXYÝ[OHÚYÈÏÝ°â\\ÛÙOÝ]HXÝÜX]ÝÝ[OH^X[YÛYÚÈ^\ÏÝÝ[OH^X[YÛYÚÈ]YY[ÙOÝÝÝXYÙHYH\]ÙHÛÛÜ[HÛ\ÜÏHØY[È¸§ìÈÚ\Ù[Y[8 )ÝÝÝÙOÝXOÙ]Ù]ÛXZ[KKH8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dÓÕT¸¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dKOÛÝ\Û\ÜÏHÛÝ\]YHÛÝ\Y]H¸ %\pêHZ\ÙH0èÝ\[][OÙ]]Ý[OHX\Ú[]Ü\ÛÜXÚ]NNÈ[\ÙXÝ[ÛÙØ\Ý0­È\ÚØ\K0­ÂHYHÎËÙØÜËÛÛÙÛKÛÛKÜÜXYÚY]ËÙÌQUTÚYYÙÍQ^QTÚ\[XLZLÙMXÑLÐ\ÛËÙY]\Ù]HØ[ÈÝ]\ÛÛÙÛHÚY]8¡¥ÂØOÙ]ÙÛÝ\KKH8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dUTÐÔT¸¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥d8¥dKOØÜ\ËÈ8¥ 8¥ ÓÓQÈ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ÛÛÝÒQUÒQH	ÌQUTÚYYÙÍQ^QTÚ\[XLZLÙMXÑLÐ\ÛÉÎÂËÈÞY\ÈÓÔÈ[Ø\ØØYH8 %[NËÈH]]\È\[\ÛÛÙÛH\XÝ[Y[ÛÛÝT×ÑSHHØØ][ÛÝØÛÛOOH	Ù[NÎÂÛÛÝÖQTÈHÂ	ÚÎËØ\K[ÜYÚ[ËÚ[Ü]ÏÝ\IË	ÚÎËØ\KÛÙ]XËÛÛKÝKÜÞOÜ]Y\ÝIËNÂËÈÜX]Ý^ÝH8 %ÛÝ[ÛH]XÈ[ÚY]XXÈÝHXpêHÝ\HÙXÛÛÝÕH
-ÚY]
-HOÎËÙØÜËÛÛÙÛKÛÛKÜÜXYÚY]ËÙÉÔÒQUÒQKÙÝ^ÝOÝ^[Ý]ÜÝÚY]IÙ[ÛÙUTPÛÛ\Û[
-ÚY]
-_XÂÛÛÝTÈHÂÜÝYWÛÝ\Y]ÎÕ	ÔÜÝYWÓÝ\Y]ÉÊKÜÝYWÙ\\ÛÙ\ÎÕ	ÔÜÝYWÑ\\ÛÙ\ÉÊK[Ý]XWÛÝ\Y]ÎÕ	Ö[ÝUXWÓÝ\Y]ÉÊKZÝÚ×ÛÝ\Y]ÎÕ	ÕZÕÚ×ÓÝ\Y]ÉÊKZÝÚ×ÝÜÕ	ÕZÕÚ×ÕÜY[ÜÉÊKÚ\Ù]NÕ	×ÐÚ\]IÊKNÂËÈ8¥ 8¥ ÓÐSÕUH8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ÛÛÝÝ]HHÂÜ^\Î[ÜÛÝÙ\Î[]ÝXÎ[ÛÝÙ\Î[NÂÛÛÝÚ\ÈHßNÂËÈ8¥ 8¥ USÈ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ [Ý[Û]
-HÂY
-OOH[OOH[Y[Y\ÓSHOOH	ÉÊH]\	ø %	ÎÂH\ÙQØ]
-NÂY
-HWÌÌ
-H]\
-ÈWÌÌ
-KÑ^Y
-JH
-È	ÓIÎÂY
-HLÌ
-H]\
-ÈWÌ
-KÑ^Y
-
-H
-È	ÚÉÎÂY
-HWÌ
-H]\
-ÈWÌ
-KÑ^Y
-JH
-È	ÚÉÎÂ]\ÓØØ[TÝ[Ê	ÙPÐIÊNÂB[Ý[Û\ÙPÔÕ^
-^
-HÂ]\]ÈÛZ\ÙJ
-\ÛÛKZXÝ
-HOÂ\K\ÙJ^ÂXY\YKÚÚ\[\S[\ÎYKÛÛ\]NO\ÛÛJ]JK\ÜHOZXÝ
-JKJNÂJNÂB\Þ[È[Ý[Û]ÚÔÕ\
-HÂËÈK[\	ØXØðêÈ\XÝ
-ÛÝ[ÛHÝ\ØØ[ÜÝÝHÚHÛÛÙÛH]]Ü\ÙHHÓÔÊBHÂÛÛÝ\ÈH]ØZ]]Ú
-\
-NÂY
-\ËÚÊH]\\ÙPÔÕ^
-]ØZ]\Ë^
+        <div class="name">Top Épisodes Spotify</div>
+        <div class="handle">Classement par nombre de plays</div>
+      </div>
+      <span class="badge badge-sheets">Sheet</span>
+    </div>
+    <div class="card-body" id="sh-episodes-body">
+      <div class="skeleton" style="height:120px"></div>
+    </div>
+  </div>
 
-JNÂHØ]Ú
-ÊHÈÊÓÔÈÝH°ê\ÙX]H8 %Û\ÜÙH]^ÞY\È
-ÈBËÈÞY\È[Ø\ØØYH
-[NËË]YK\Ý]ðîHÓÔÈÜ]YJB]\Ý\ÂÜ
-ÛÛÝÞHÙÖQTÊHÂHÂÛÛÝ\ÈH]ØZ]]Ú
-ÞH
-È[ÛÙUTPÛÛ\Û[
-\
-JNÂY
-\\ËÚÊHÝÈ]È\Ü	Ü\ËÝ]\ßX
-NÂÛÛÝ^H]ØZ]\Ë^
+  <!-- ── MANUAL PLATFORMS ─────────────────────────────────── -->
+  <div class="section-header" style="margin-top:32px">
+    <span class="section-title">Stats manuelles</span>
+    <span style="font-size:12px;color:var(--text2)">Instagram & Facebook (non disponibles via API)</span>
+  </div>
 
-NÂY
-^Ý\ÕÚ]
-	ÞÉÊH	^[ÛY\Ê	Ù\ÜÊJHÝÈ]È\Ü	ÔÞH\ÜÊNÂ]\]ØZ]\ÙPÔÕ^
-^
-NÂHØ]Ú
-JHÂ\Ý\HNÂÛÛÛÛKØ\ÜÞHZ[YH	ÜÞKÜ]
-	ËÉÊVÌ_NKY\ÜØYÙJNÂBBÝÈ\Ý\ÂBËÈ[\ÝÝÈÚ\HÛÛX]Ú\ÈÙ^X
-Ø\ÙKZ[Ù[Ú]]H[JB[Ý[Û[ÝÊÝÜËÛÛÙ^JHÂ]\ÝÜË[
-O
-ØÛÛH	ÉÊK[J
-KÓÝÙ\Ø\ÙJ
-HOOHÙ^K[J
-KÓÝÙ\Ø\ÙJ
-JNÂB[Ý[ÛÙ][
-ÝÜËÛÛÙ^JHÂÛÛÝH[ÝÊÝÜËÛÛÙ^JNÂ]\È\ÙQØ]
-[]\H[ÂBËÈÜÝÜÈÚ]Ø[YHY]XÈ[YH]Y\[\[Ù[Ý[ÛÙ][T\[Ù
-ÝÜËY]XÓ[YK\[Ù
-HÂÛÛÝHÝÜË[
-O
-Y]\]YH	ÉÊK[J
-KÓÝÙ\Ø\ÙJ
-HOOHY]XÓ[YKÓÝÙ\Ø\ÙJ
-H	
-\[ÙH	ÉÊK[J
-KÓÝÙ\Ø\ÙJ
-HOOH\[ÙÓÝÙ\Ø\ÙJ
-B
-NÂ]\È\ÙQØ]
-[]\H[ÂB[Ý[ÛTÝÊX[[YK\[ÙH	ÉËÛÈH	ÉÊHÂÛÛÝH
-[YHOOH[[YHOOH[Y[Y\ÓS[YJJBÈ	ø %	Â
-\[Ù[YHOOH	ÜÝ[ÉÈÈ[YH]
-[YJJNÂ]\]Û\ÜÏHK\ÝÈÜ[Û\ÜÏHK[ÛX[IÜ\[ÙÈÜ[Û\ÜÏHK\\[ÙÜ\[ÙOÜÜ[	ÉßOÜÜ[Ü[Û\ÜÏHK][	ØÛßHÝOÜÜ[Ù]ÂB[Ý[Û[Ò][J[Ë]KXZ[[ÝX[H	ÉË[ÛÈH	ÉÊHÂ]\]Û\ÜÏH[ËZ][HÜ[Û\ÜÏHÜ[ßOÜÜ[]Û\ÜÏH[Ë]]HÝ]_OÙ]]Ý[OH^X[YÛYÚÙ^\Ú[ÎÈ]Û\ÜÏH[Ë][	Ý[ÛßHÙ]
-XZ[[
-_OÙ]	ÜÝX[È]Û\ÜÏH[Ë][\ÝXÜÝX[OÙ]	ÉßBÙ]Ù]ÂB[Ý[ÛÚÝÔÙ]\[\
+  <div class="grid">
 
-HÂØÝ[Y[Ù][[Y[RY
-	ÜÙ]\[\	ÊKÛ\ÜÓ\Ý[[ÝJ	ÚY[ÊNÂBËÈ8¥ 8¥ ÔÕQHÕTQUÈ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ \Þ[È[Ý[ÛØYÜÝYSÝ\Y]Ê
-HÂHÂÛÛÝÝÜÈH]ØZ]]ÚÔÕTËÜÝYWÛÝ\Y]ÊNÂÛÛÝÛÛ[YHH	Ý\Ý	ÎÈËÈÙÛÛ[[[YH[ÜÝYHXÛÛÝ^\ÈHÙ][
-ÝÜËÛÛ[YK	Ô^\ÈÝ[[][YIÊNÂÛÛÝÛHÙ][
-ÝÜËÛÛ[YK	ÑÛÝÙ\ÉÊNÂÛÛÝ^\ÌÌHÙ][
-ÝÜËÛÛ[YK	Ô^\ÉÊNÂÛÛÝÝX[\ÈHÙ][
-ÝÜËÛÛ[YK	ÔÝX[\ÉÊNÂÛÛÝ]YY[ÙHHÙ][
-ÝÜËÛÛ[YK	Ð]YY[ÙHÚ^IÊNÂÛÛÝ\ÈHÙ][
-ÝÜËÛÛ[YK	ÕÝ[\\ÛÙ\ÉÊNÂÛÛÝÛÛÝ[\HÙ][
-ÝÜËÛÛ[YK	ÐÛÛÝ[\[ÛÝ\ÉÊNÂÝ]KÜ^\ÈH^\ÎÂÝ]KÜÛÝÙ\ÈHÛÂÙ]
-	Ú\Ü\^\ÉË]
-^\ÊJNÂÙ]
-	Ú\Ü\^\Ë\ÝXË	Ù]
-^\ÌÌ
-_H^\È0­ÈÌ\Y\ÈÝ\Ø
-NÂÙ]
-	Ú\ÜYÛ	Ë]
-Û
-JNÂÙ]
-	Ú\ÜYÛ\ÝXË	Ù]
-\Ê_H0ê\\ÛÙ\ÈXpê\Ø
-NÂÙ]
-	ØYÙK\Ü	Ë	Ù]
-^\ÌÌ
-_H^\ËÌÌ
-NÂÙ]
-	ÜÜÝYK[Y]XÜÉËÂTÝÊ	Ô^\È[][YIË^\Ë	ÉË	ÜÜ	ÊKTÝÊ	ÑÛÝÙ\ÉËÛ	Ø[[YIË	ÜÜ	ÊKTÝÊ	Ô^\ÉË^\ÌÌ	ÌÌÝ\ÉË	ÜÜ	ÊKTÝÊ	ÔÝX[\ÉËÝX[\Ë	ÌÌÝ\ÉÊKTÝÊ	Ò]\\È0êXÛÝ]0êY\ÉËÛÛÝ[\	ÌÌÝ\ÉÊKTÝÊ	Ð]YY[ÙIË]YY[ÙK	ÌÌÝ\ÉÊKTÝÊ	ðâ\\ÛÙ\ÈÝ[	Ë\Ë	ÉÊKKÚ[	ÉÊJNÂHØ]Ú
-JHÂÛÛÛÛK\Ü	ÖÔÜÝYHÝ\Y]×IËJNÂÙ]
-	ÜÜÝYK[Y]XÜÉË]Û\ÜÏH\[\ÙÈÛ°êY\ÈÛ\ÜÛX\ËÚ\ÛÛYÝ\][ÛÚKY\ÜÝ\ËÙ]
-NÂÚÝÔÙ]\[\
+    <!-- TIKTOK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="platform-icon" style="background:rgba(238,29,82,0.15)">♪</div>
+        <div>
+          <div class="name">TikTok</div>
+          <div class="handle">@intersectionpodcast</div>
+        </div>
+        <span class="badge badge-manual">Manuel</span>
+      </div>
+      <div class="card-body">
+        <div class="manual-grid">
+          <div class="input-group">
+            <label>Abonnés</label>
+            <input type="number" id="tt-followers" placeholder="0" onchange="queueSave()">
+          </div>
+          <div class="input-group">
+            <label>Vues totales</label>
+            <input type="number" id="tt-views" placeholder="0" onchange="queueSave()">
+          </div>
+          <div class="input-group">
+            <label>Likes totaux</label>
+            <input type="number" id="tt-likes" placeholder="0" onchange="queueSave()">
+          </div>
+          <div class="input-group">
+            <label>Vidéos publiées</label>
+            <input type="number" id="tt-videos" placeholder="0" onchange="queueSave()">
+          </div>
+        </div>
+        <div class="note">ℹ️ Données disponibles dans TikTok Studio → Analytiques</div>
+      </div>
+    </div>
 
-NÂBBËÈ8¥ 8¥ ÔÕQHTTÓÑTÈ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ \Þ[È[Ý[ÛØYÜÝYQ\\ÛÙ\Ê
-HÂHÂÛÛÝÝÜÈH]ØZ]]ÚÔÕTËÜÝYWÙ\\ÛÙ\ÊNÂÛÛÝÛÜYHËÝÜ×KÛÜ
+    <!-- INSTAGRAM -->
+    <div class="card">
+      <div class="card-header">
+        <div class="platform-icon" style="background:rgba(225,48,108,0.15)">📸</div>
+        <div>
+          <div class="name">Instagram</div>
+          <div class="handle">@intersection.podcast</div>
+        </div>
+        <span class="badge badge-manual">Manuel</span>
+      </div>
+      <div class="card-body">
+        <div class="manual-grid">
+          <div class="input-group">
+            <label>Abonnés</label>
+            <input type="number" id="ig-followers" placeholder="0" onchange="queueSave()">
+          </div>
+          <div class="input-group">
+            <label>Publications</label>
+            <input type="number" id="ig-posts" placeholder="0" onchange="queueSave()">
+          </div>
+          <div class="input-group">
+            <label>Portée (7j)</label>
+            <input type="number" id="ig-reach" placeholder="0" onchange="queueSave()">
+          </div>
+          <div class="input-group">
+            <label>Vues Reels</label>
+            <input type="number" id="ig-reel-views" placeholder="0" onchange="queueSave()">
+          </div>
+        </div>
+        <div class="note">ℹ️ Données dans Instagram → Insights → Votre activité</div>
+      </div>
+    </div>
 
-KHO\ÙQØ]
-^\ß
-HH\ÙQØ]
-K^\ß
-JNÂËÈÜ
-^ÛX[\
-[È\[Y[XÚ\]YJBÛÛÝÜHÛÜY[\HOYK\\ÛÙOËÝ\ÕÚ]
-	Ñ\	ÊJKÛXÙJ
-NÂÙ]
-	ÜÜÝYK]Ü	ËÜX\
+    <!-- FACEBOOK -->
+    <div class="card">
+      <div class="card-header">
+        <div class="platform-icon" style="background:rgba(24,119,242,0.15)">👥</div>
+        <div>
+          <div class="name">Facebook</div>
+          <div class="handle">Intersection Podcast</div>
+        </div>
+        <span class="badge badge-manual">Manuel</span>
+      </div>
+      <div class="card-body">
+        <div class="manual-grid">
+          <div class="input-group">
+            <label>Abonnés / Fans</label>
+            <input type="number" id="fb-followers" placeholder="0" onchange="queueSave()">
+          </div>
+          <div class="input-group">
+            <label>Portée (7j)</label>
+            <input type="number" id="fb-reach" placeholder="0" onchange="queueSave()">
+          </div>
+          <div class="input-group">
+            <label>Vues Reels</label>
+            <input type="number" id="fb-reel-views" placeholder="0" onchange="queueSave()">
+          </div>
+          <div class="input-group">
+            <label>Engagement</label>
+            <input type="number" id="fb-engagement" placeholder="0" onchange="queueSave()">
+          </div>
+        </div>
+        <div class="note">ℹ️ Données dans Meta Business Suite → Statistiques</div>
+      </div>
+    </div>
 
-\JHOÂÛÛÝ]HH
-\\\ÛÙH	ÉÊK\XÙJ×\
-Ê
-ÊOÈHË	ÉÊNÂ]\[Ò][JH
-ÈK[Ø]J]KÍ
-K\^\Ë	ÉË	ÜÜ	ÊNÂJKÚ[	ÉÊJNÂËÈ[XBÛÛÝÙHHÛÜYX\
+  </div>
 
-\JHOÂÛÛÝ]ØYÙHH\ÜX]OOH	ÕY[ÉÂÈÜ[Û\ÜÏH]XYÙH]]Y[ÈY0ê[ÏÜÜ[Ü[Û\ÜÏH]XYÙH]X]Y[È]Y[ÏÜÜ[Â]\Ü[Û\ÜÏHÚJÌ_OÜÜ[ÝÛ\ÜÏH\[[YHÙ\\\ÛÙH	ø %	ßOÝÝ[OHÚ]K\ÜXÙNÝÜ\ØÛÛÜ\K]^[]]Y
-NÈÙ\]WÜX	ÉßOÝÙ]ØYÙ_OÝÛ\ÜÏH\[[HÜÝ[OHÛÛÜ\K\ÜÝYJNÈÙ]
-\^\Ê_OÝÛ\ÜÏH\[[HÝ[OHÛÛÜ\K]^\ÙXÛÛ\JNÈÙ]
-\]YY[ÙJ_OÝÝÂJKÚ[	ÉÊNÂØÝ[Y[Ù][[Y[RY
-	Ù\]ÙIÊK[\SHÙNÂËÈ\Ú\
-ÜØ[È\
-BÛÛÝÚ\HÛÜY[\HOYK\\ÛÙOËÝ\ÕÚ]
-	Ñ\	ÊJKÛXÙJ
-NÂZ[Ú\
-	ØÚ\ÜÝYQ\	Ë	Ø\ËÂX[ÎÚ\X\
-HO[Ø]J
-K\\ÛÙ_	ÉÊK\XÙJ×\
-Ê
-ÊOÈHË	ÉÊKN
-JK]\Ù]ÎÞÂ]NÚ\X\
-HO\ÙQØ]
-K^\ß
-JKXÚÙÜÝ[ÛÛÜ	ÜØJKN
-K
-ÍJIËÜ\ÛÛÜ	ÈÌYMM	ËÜ\ÚYKÜ\Y]\Î
-KWKKÂYÚ[ÎÈYÙ[È\Ü^N[ÙHHKØØ[\ÎÂÈXÚÜÎÈÛÛÜ	ÈÍ
-N	ËÛÈÚ^NHKX^Ý][Û
-KÜYÈÛÛÜ	ÜØJMKMKMKÊIÈHKNÈXÚÜÎÈÛÛÜ	ÈÍ
-N	ËÛÈÚ^NHHKÜYÈÛÛÜ	ÜØJMKMKMK
+</div>
 
-IÈHKKJNÂHØ]Ú
-JHÂÛÛÛÛK\Ü	ÖÔÜÝYH\\ÛÙ\×IËJNÂÙ]
-	ÜÜÝYK]Ü	Ë]Û\ÜÏH\[\ÙÈÛ\ÜÛXOÙ]
-NÂÚÝÔÙ]\[\
+<!-- ── SETUP MODAL ──────────────────────────────────────────── -->
+<div class="overlay" id="overlay" onclick="closeSetup(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>⚙️ Configuration des API</h2>
+    <p class="desc">Entrez vos clés API pour activer la récupération automatique des stats.</p>
 
-NÂBBËÈ8¥ 8¥ SÕUPH8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ \Þ[È[Ý[ÛØY[ÝUXJ
-HÂHÂÛÛÝÝÜÈH]ØZ]]ÚÔÕTË[Ý]XWÛÝ\Y]ÊNÂÛÛÝÝXÈHÙ][
-ÝÜË	ÓY]\]YIË	ÐXÛ\ÈÝ[	ÊNÂÛÛÝ]ÔÝXÈHÙ][
-ÝÜË	ÓY]\]YIË	ÐXÛ\ÈØYÛ\ÉÊNÂÛÛÝY]ÜÌHÙ][
-ÝÜË	ÓY]\]YIË	ÕY\ÉÊNÂÛÛÝØ]ÚHÙ][
-ÝÜË	ÓY]\]YIË	ÕØ]Ú[YH]\\ÉÊNÂÛÛÝ
-HÙ][
-ÝÜË	ÓY]\]YIË	ÕY\ÈX[[YH
-	ÊNÂÛÛÝÙY]ÜÈHÙ][
-ÝÜË	ÓY]\]YIË	ÔÙØ\ÝY]ÜÉÊNÂÛÛÝÙØ]ÚHÙ][
-ÝÜË	ÓY]\]YIË	ÔÙØ\ÝØ]Ú[YH]\\ÉÊNÂÝ]K]ÝXÈHÝXÎÂÙ]
-	Ú^]\ÝXÉË]
-ÝXÊJNÂÙ]
-	Ú^]\ÝXË\ÝXË
-ÉÙ]
-]ÔÝXÊ_HÝ]X]^0­È\Y\ÈÝ\Ø
-NÂÙ]
-	ØYÙK^]	Ë	Ù]
-Y]ÜÌ
-_HY\ËÌ
-NÂÙ]
-	Þ[Ý]XK[Y]XÜÉËÂTÝÊ	ÐXÛ°ê\ÈÝ[	ËÝXË	ÉË	Þ]	ÊKTÝÊ	ÓÝ]X]^XÛ°ê\ÉË]ÔÝXË	ÌÝ\ÉË	Þ]	ÊKTÝÊ	ÕY\ÉËY]ÜÌ	ÌÝ\ÉÊKTÝÊ	ÕØ]Ú[YIËØ]ÚOOH[ÈØ]Ú
-È	Ú	È[	ÌÝ\ÉÊKTÝÊ	ÕY\ÈX[[YIË
-	Í]\\ÉÊKTÝÊ	ÕY\ÈÙØ\Ý	ËÙY]ÜË	ÜÙXÝ[ÛÙØ\Ý	ÊKTÝÊ	ÕØ]Ú[YHÙØ\Ý	ËÙØ]ÚOOH[ÈÙØ]Ú
-È	Ú	È[	ÜÙXÝ[ÛÙØ\Ý	ÊKKÚ[	ÉÊJNÂËÈÜY[ÜÂÛÛÝÜÝÜÈHÝÜË[\O
-Y]\]Y_	ÉÊKÝ\ÕÚ]
-	ÕÜ	ÊJNÂY
-ÜÝÜË[Ý
-HÂÙ]
-	Þ[Ý]XK]Ü	ËÜÝÜËX\
+    <!-- YouTube -->
+    <div class="setup-section">
+      <h3 style="color:var(--yt)">▶️ YouTube Data API v3</h3>
+      <div class="setup-field">
+        <label>Clé API Google</label>
+        <input type="password" id="cfg-yt-key" placeholder="AIzaSy..." autocomplete="off">
+        <div class="how-to" onclick="window.open('https://console.developers.google.com/')">
+          → Obtenir une clé gratuite sur Google Cloud Console
+        </div>
+      </div>
+      <div class="setup-field">
+        <label>Handle de la chaîne</label>
+        <input type="text" id="cfg-yt-handle" placeholder="podcast-intersection" value="podcast-intersection">
+      </div>
+    </div>
 
-JHOÂÛÛÝ]HH
-Y]\]YH	ÉÊK\XÙJ×Ü
-ÈHË	ÉÊNÂ]\[Ò][JH
-ÈK[Ø]J]KÍK[]\	Ý\[Ù_X	Þ]	ÊNÂJKÚ[	ÉÊJNÂZ[Ú\
-	ØÚ\[Ý]XIË	Ø\ËÂX[ÎÜÝÜËX\
-O[Ø]J
-Y]\]Y_	ÉÊK\XÙJ×Ü
-ÈHË	ÉÊKJK]\Ù]ÎÞÂ]NÜÝÜËX\
-O\ÙQØ]
-[]\
-JKXÚÙÜÝ[ÛÛÜ	ÜØJMK
-
-ÍJIËÜ\ÛÛÜ	ÈÙ
+    <div class="sep"></div>
 
+    <!-- Spotify -->
+    <div class="setup-section">
+      <h3 style="color:var(--spotify)">🎵 Spotify API (gratuit)</h3>
+      <div class="setup-field">
+        <label>Client ID</label>
+        <input type="password" id="cfg-sp-id" placeholder="32 caractères hex..." autocomplete="off">
+      </div>
+      <div class="setup-field">
+        <label>Client Secret</label>
+        <input type="password" id="cfg-sp-secret" placeholder="32 caractères hex..." autocomplete="off">
+        <div class="how-to" onclick="window.open('https://developer.spotify.com/dashboard')">
+          → Créer une app gratuite sur Spotify Developer Dashboard
+        </div>
+      </div>
+    </div>
 
-	ËÜ\ÚYKÜ\Y]\Î
-KWKKÂ[^^\Î	ÞIËYÚ[ÎÈYÙ[È\Ü^N[ÙHHKØØ[\ÎÂÈXÚÜÎÈÛÛÜ	ÈÍ
-N	ËÛÈÚ^NHHKÜYÈÛÛÜ	ÜØJMKMKMK
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeSetup()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveConfig()">💾 Sauvegarder & Actualiser</button>
+    </div>
+  </div>
+</div>
 
-IÈHKNÈXÚÜÎÈÛÛÜ	ÈÎMYIËÛÈÚ^NHHKÜYÈ\Ü^N[ÙHHKKJNÂH[ÙHÂÙ]
-	Þ[Ý]XK]Ü	Ë	Ï]Û\ÜÏH\[\ÙÈ\È[ÛÜHHÛ°êY\ÈÜY0ê[ÜËÙ]ÊNÂBHØ]Ú
-JHÂÛÛÛÛK\Ü	ÖÖ[ÝUXWIËJNÂÙ]
-	Þ[Ý]XK[Y]XÜÉË]Û\ÜÏH\[\ÙÈÛ°êY\ÈÛ\ÜÛX\ËÙ]
-NÂÚÝÔÙ]\[\
+<script>
+// ──────────────────────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────────────────────
+const API = 'http://localhost:5050';
+let saveTimer = null;
+let refreshing = false;
 
-NÂBBËÈ8¥ 8¥ RÕÒÈÕTQUÈ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ \Þ[È[Ý[ÛØYZÕÚÊ
-HÂHÂÛÛÝÝÜÈH]ØZ]]ÚÔÕTËZÝÚ×ÛÝ\Y]ÊNÂÛÛÝÛHÙ][
-ÝÜË	ÓY]\]YIË	ÑÛÝÙ\ÈÝ[	ÊNÂÛÛÝ]ÛHÙ][
-ÝÜË	ÓY]\]YIË	Ó]ÛÝÙ\ÉÊNÂÛÛÝY\ÍÈHÙ][T\[Ù
-ÝÜË	ÕY[ÈY]ÜÉË	Ó\Ý
-È^\ÉÊNÂÛÛÝY\ÌÍHHÙ][T\[Ù
-ÝÜË	ÕY[ÈY]ÜÉË	Ó\ÝÍH^\ÉÊNÂÛÛÝZÙ\ÍÈHÙ][T\[Ù
-ÝÜË	ÓZÙ\ÉË	Ó\Ý
-È^\ÉÊNÂÛÛÝZÙ\ÌÍHHÙ][T\[Ù
-ÝÜË	ÓZÙ\ÉË	Ó\ÝÍH^\ÉÊNÂÛÛÝÛÛ[LÍHHÙ][T\[Ù
-ÝÜË	ÐÛÛ[Y[ÉË	Ó\ÝÍH^\ÉÊNÂÛÛÝÚ\\ÈHÙ][
-ÝÜË	ÓY]\]YIË	ÔÚ\\ÉÊNÂÛÛÝYXÑHHÙ][
-ÝÜË	ÓY]\]YIË	ÕYXÈÜ[ÝH	IÊNÂÛÛÝX[THÙ][
-ÝÜË	ÓY]\]YIË	Ð]YY[ÙHÙ[\X[H	IÊNÂÛÛÝ[X[THÙ][
-ÝÜË	ÓY]\]YIË	Ð]YY[ÙHÙ[\[X[H	IÊNÂÝ]KÛÝÙ\ÈHÛÂÙ]
-	Ú]YÛ	Ë]
-Û
-JNÂÙ]
-	Ú]YÛ\ÝXË	Ù]
-Y\ÍÊ_HY\È0­È
-È\Y\ÈÝ\Ø
-NÂÙ]
-	ØYÙK]	Ë	Ù]
-Y\ÌÍJ_HY\ËØ[
-NÂÙ]
-	ÝZÝÚË[Y]XÜÉËÂTÝÊ	ÑÛÝÙ\ÈÝ[	ËÛ	ÉË	Ý	ÊKTÝÊ	ÕY\ÈY0ê[ÉËY\ÍË	ÍÈÝ\ÉË	Ý	ÊKTÝÊ	ÕY\ÈY0ê[ÉËY\ÌÍK	ÌÍHÝ\ÉÊKTÝÊ	ÓZÙ\ÉËZÙ\ÍË	ÍÈÝ\ÉÊKTÝÊ	ÓZÙ\ÉËZÙ\ÌÍK	ÌÍHÝ\ÉÊKTÝÊ	ÐÛÛ[Y[Z\\ÉËÛÛ[LÍK	ÌÍHÝ\ÉÊKTÝÊ	Ô\YÙ\ÉËÚ\\Ë	ÌÍHÝ\ÉÊKTÝÊ	ÕYXÈÝ\ÚHËYXÑHOOH[ÈYXÑH
-È	ÉIÈ[	ÌÍHÝ\ÉÊKKÚ[	ÉÊJNÂËÈÙ[\\Y
-X[TOOH[	[X[TOOH[
-HÂÙ]
-	ÝZÝÚËYÙ[\Ë]Û\ÜÏHË[X[ÈÜ[Ý[OHÛÛÜ\K]ZÝÚËXÊH¸¦`Û[Y\È8 %	ÛX[TIOÜÜ[Ü[Ý[OHÛÛÜ\K]ZÝÚË\
-H[[Y\È8 %	Ù[X[TIH8¦`ÜÜ[Ù]]Û\ÜÏHËX\]XÚÈÝ[OHX\Ú[]ÜÈ]Û\ÜÏHËX\Y[Ý[OHÚYÛX[TIHÙ]Ù]
-NÂBHØ]Ú
-JHÂÛÛÛÛK\Ü	ÖÕZÕÚÈÝ\Y]×IËJNÂÙ]
-	ÝZÝÚË[Y]XÜÉË]Û\ÜÏH\[\ÙÈÛ°êY\ÈÛ\ÜÛX\ËÙ]
-NÂÚÝÔÙ]\[\
+// ──────────────────────────────────────────────────────────────
+// UTILS
+// ──────────────────────────────────────────────────────────────
+function fmt(n) {
+  if (!n && n !== 0) return '—';
+  n = parseInt(n) || 0;
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000)    return (n / 1000).toFixed(1) + 'K';
+  return n.toLocaleString('fr-CA');
+}
 
-NÂBBËÈ8¥ 8¥ RÕÒÈÔQSÔÈ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ \Þ[È[Ý[ÛØYZÕÚÕÜ
+function relDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const diff = Math.floor((Date.now() - d) / 86400000);
+  if (diff === 0) return "aujourd'hui";
+  if (diff === 1) return 'hier';
+  if (diff < 7)  return `il y a ${diff}j`;
+  if (diff < 30) return `il y a ${Math.floor(diff/7)}sem`;
+  return `il y a ${Math.floor(diff/30)}mois`;
+}
 
-HÂHÂÛÛÝÝÜÈH]ØZ]]ÚÔÕTËZÝÚ×ÝÜ
-NÂÙ]
-	ÝZÝÚË]Ü	ËÝÜËX\
-O[Ò][J[Ë[Ø]J]H	ÉËÎ
-KY\×ÍÚ	Ù]
-Y\×ÝÝ[
-_HÝ[	Ý	Â
-B
-KÚ[	ÉÊJNÂHØ]Ú
-JHÂÛÛÛÛK\Ü	ÖÕZÕÚÈÜIËJNÂÙ]
-	ÝZÝÚË]Ü	Ë]Û\ÜÏH\[\ÙÈÛ\ÜÛXOÙ]
-NÂBBËÈ8¥ 8¥ SQHÑTQTÈÒT8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ \Þ[È[Ý[ÛØYÚ\]J
-HÂHÂÛÛÝÝÜÈH]ØZ]]ÚÔÕTËÚ\Ù]JNÂÛÛÝX[ÈHÝÜËX\
-O]JNÂÛÛÝÜ]HHÝÜËX\
-O\ÙQØ]
-ÉÔÜÝYH^\È
-[[YJI×H
-JNÂÛÛÝ]]HHÝÜËX\
-O\ÙQØ]
-ÉÖ[ÝUXHXÛ\É×H
-JNÂÛÛÝ]HHÝÜËX\
-O\ÙQØ]
-ÉÕZÕÚÈÛÝÙ\É×H
-JNÂÛÛÝY]\ÈHX[Ë[ÝÌÈ
-ÂZ[Ú\
-	ØÚ\[Y\Ù\Y\ÉË	Û[IËÂX[Ë]\Ù]ÎÂÂX[	ÔÜÝYH^\È[][YIË]NÜ]KÜ\ÛÛÜ	ÈÌYMM	ËXÚÙÜÝ[ÛÛÜ	ÜØJKN
-K
-
-IË[YK[Ú[ÛÚ[Y]\ÎY]\ËÚ[Ý\Y]\Î
-Ü\ÚYKÂX[	Ö[ÝUXHXÛ°ê\ÉË]N]]KÜ\ÛÛÜ	ÈÙ
+// ──────────────────────────────────────────────────────────────
+// REFRESH ALL
+// ──────────────────────────────────────────────────────────────
+async function refreshAll() {
+  if (refreshing) return;
+  refreshing = true;
 
+  const btn = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  btn.disabled = true;
+  icon.className = 'spin';
 
-	ËXÚÙÜÝ[ÛÛÜ	ÜØJMK
-
-
-IË[YK[Ú[ÛÚ[Y]\ÎY]\ËÚ[Ý\Y]\Î
-Ü\ÚYKÂX[	ÕZÕÚÈÛÝÙ\ÉË]N]KÜ\ÛÛÜ	ÈÌXIËXÚÙÜÝ[ÛÛÜ	ÜØJÍ
-IË[YK[Ú[ÛÚ[Y]\ÎY]\ËÚ[Ý\Y]\Î
-Ü\ÚYKKKÂ[\XÝ[ÛÈ[ÙN	Ú[^	Ë[\ÙXÝ[ÙHKYÚ[ÎÂYÙ[ÈX[ÎÈÛÛÜ	ÈÎMYIËÛÈÚ^NLHKÞÚYLY[ÎMHKÛÛ\ÛÛ\Ý[J
-KKØØ[\ÎÂÈXÚÜÎÈÛÛÜ	ÈÍ
-N	ËÛÈÚ^NLKX^XÚÜÓ[Z]MKÜYÈÛÛÜ	ÜØJMKMKMK
+  const dot = document.getElementById('statusDot');
+  dot.className = 'dot';
+  document.getElementById('lastUpdated').textContent = 'Mise à jour...';
 
-IÈHKNÈXÚÜÎÈÛÛÜ	ÈÍ
-N	ËÛÈÚ^NLHKÜYÈÛÛÜ	ÜØJMKMKMK
+  // Placeholders pendant le chargement
+  showYtLoading();
+  showSpLoading();
+  showApLoading();
 
-IÈHKKJNÂY
-X[Ë[ÝHJHÂÛÛÝÝHHØÝ[Y[ÜX]Q[[Y[
-	Ù]ÊNÂÝKÝ[KÜÜÕ^H	ÙÛ\Ú^NL\ØÛÛÜ\K]^[]]Y
-NÝ^X[YÛÙ[\ÛX\Ú[]ÜÉÎÂÝK^ÛÛ[H8¡.{î#È	ÛX[Ë[ÝHÚ[HÛ°êY\ÈÝ\	Ú[Ý[8 %HÜ\\]YH0ê]ÛY\H]XÈ\ÈØÚZ[\È[°êY\È][ÝYY[\ËÂØÝ[Y[Ù][[Y[RY
-	Ý[Y\Ù\Y\ÕÜ\	ÊKY\ÝJNÂBHØ]Ú
-JHÂÛÛÛÛK\Ü	ÖÐÚ\]WIËJNÂØÝ[Y[Ù][[Y[RY
-	Ý[Y\Ù\Y\ÕÜ\	ÊK[\SB]Û\ÜÏH\[\ÙÈÝ[OHZYÚÙ\Ü^N^Ø[YÛZ][\ÎÙ[\Ú\ÝYKXÛÛ[Ù[\È<'äâÛ°êY\È	ðê]Û][ÛÛ\ÜÛX\È8 %\ÜÝ\^]Ý\È]YH	ÛÛÛ][OÐÚ\]OÙ[O\ÝXpêHÝ\HÙXÙ]ÂÚÝÔÙ]\[\
+  try {
+    const res = await fetch(`${API}/api/stats/all`);
+    const data = await res.json();
 
-NÂBBËÈ8¥ 8¥ ÓÓTTUUHÒT8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ [Ý[ÛZ[ÛÛ\\]]PÚ\
+    renderYoutube(data.platforms.youtube);
+    renderSpotify(data.platforms.spotify);
+    renderApple(data.platforms.apple);
 
-HÂZ[Ú\
-	ØÚ\ÛÛ\\]]IË	Ø\ËÂX[ÎÉÔÜÝYHÛÝÙ\ÉË	Ö[ÝUXHXÛ°ê\ÉË	ÕZÕÚÈÛÝÙ\É×K]\Ù]ÎÞÂX[	ÑÛÝÙ\ÈÈXÛ°ê\ÉË]NÜÝ]KÜÛÝÙ\ÈÝ]K]ÝXÈÝ]KÛÝÙ\ÈKXÚÙÜÝ[ÛÛÜÉÜØJKN
-K
-
-IË	ÜØJMK
-
-
-IË	ÜØJÍ
-I×KÜ\ÛÛÜÉÈÌYMM	Ë	ÈÙ
+    // Manual stats already loaded
+    const ts = new Date(data.timestamp);
+    document.getElementById('lastUpdated').textContent =
+      'Mis à jour à ' + ts.toLocaleTimeString('fr-CA', {hour:'2-digit', minute:'2-digit'});
+    dot.className = 'dot live';
+  } catch(e) {
+    document.getElementById('lastUpdated').textContent = 'Erreur de connexion — serveur en marche?';
+    dot.className = 'dot';
+  }
 
+  btn.disabled = false;
+  icon.className = '';
+  refreshing = false;
+}
 
-	Ë	ÈÌXI×KÜ\ÚYKKÜ\Y]\Î
-ËWKKÂYÚ[ÎÂYÙ[È\Ü^N[ÙHKÛÛ\ÛÛ\Ý[J
-KKØØ[\ÎÂÈXÚÜÎÈÛÛÜ	ÈÎMYIËÛÈÚ^NLÙZYÚ	Í	ÈHKÜYÈ\Ü^N[ÙHHKNÈXÚÜÎÈÛÛÜ	ÈÍ
-N	ËÛÈÚ^NLHKÜYÈÛÛÜ	ÜØJMKMKMK
+// ──────────────────────────────────────────────────────────────
+// YOUTUBE
+// ──────────────────────────────────────────────────────────────
+function showYtLoading() {
+  document.getElementById('yt-body').innerHTML =
+    `<div class="skeleton" style="height:70px;margin-bottom:10px"></div>
+     <div class="skeleton" style="height:44px;margin-bottom:8px"></div>
+     <div class="skeleton" style="height:44px;margin-bottom:8px"></div>
+     <div class="skeleton" style="height:44px"></div>`;
+}
 
-IÈHKKJNÂBËÈ8¥ 8¥ ÒTST8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ [Ý[ÛZ[Ú\
-Y\K]K^SÜ[ÛÈHßJHÂY
-Ú\ÖÚYJHÚ\ÖÚYK\ÝÞJ
-NÂÛÛÝØ[\ÈHØÝ[Y[Ù][[Y[RY
-Y
-NÂY
-XØ[\ÊH]\ÂÚ\ÖÚYHH]ÈÚ\
-Ø[\ËÂ\K]KÜ[ÛÎÂ\ÜÛÚ]NYKXZ[Z[\ÜXÝ][Î[ÙK[[X][ÛÈ\][Û
-K^SÜ[ÛËKJNÂB[Ý[ÛÛÛ\Ý[J
-HÂ]\ÂXÚÙÜÝ[ÛÛÜ	ÈÌXÌL	ËÜ\ÛÛÜ	ÈÌÌÍÙ	ËÜ\ÚYK]PÛÛÜ	ÈÙMYÉËÙPÛÛÜ	ÈÎMYIËY[ÎLNÂBËÈ8¥ 8¥ ÓHSTÈ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ [Ý[ÛÙ]
-Y[
-HÂÛÛÝ[HØÝ[Y[Ù][[Y[RY
-Y
-NÂY
-[
-H[[\SH[ÂB[Ý[Û[Ø]JÝHÂ]\Ý[ÝÈÝÝXÝ[ÊH
-È	ø )ÈÝÂBËÈ8¥ 8¥ PRSÐQ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ \Þ[È[Ý[ÛØY[]J
-HÂÛÛÝHØÝ[Y[Ù][[Y[RY
-	ÜY\ÚÊNÂÛÛÝXÛÛHØÝ[Y[Ù][[Y[RY
-	ÜÜ[XÛÛÊNÂ\ØXYHYNÂXÛÛÛ\ÜÓ\ÝY
-	ØXÝ]IÊNÂØÝ[Y[Ù][[Y[RY
-	ÜÙ]\[\	ÊKÛ\ÜÓ\ÝY
-	ÚY[ÊNÂËÈÚ\Ù[Y[ðê\]Y[Y[8 %0ê]]HH]K[[Z][È\ÈÞY\ÈÓÔÂÛÛÝØZ]H
-\ÊHO]ÈÛZ\ÙJOÙ][Y[Ý]
-\ÊJNÂ]ØZ]ØYÜÝYSÝ\Y]Ê
-NÈ]ØZ]ØZ]
-Ì
-NÂ]ØZ]ØYÜÝYQ\\ÛÙ\Ê
-NÈ]ØZ]ØZ]
-Ì
-NÂ]ØZ]ØY[ÝUXJ
-NÈ]ØZ]ØZ]
-Ì
-NÂ]ØZ]ØYZÕÚÊ
-NÈ]ØZ]ØZ]
-Ì
-NÂ]ØZ]ØYZÕÚÕÜ
+function renderYoutube(d) {
+  const body = document.getElementById('yt-body');
+  const badge = document.getElementById('yt-badge');
 
-NÈ]ØZ]ØZ]
-Ì
-NÂ]ØZ]ØYÚ\]J
-NÂZ[ÛÛ\\]]PÚ\
+  if (!d || d.error === 'not_configured') {
+    badge.className = 'badge badge-error';
+    badge.textContent = 'Non configuré';
+    body.innerHTML = `<div class="error-msg">🔑 Clé API YouTube requise — <span style="color:var(--accent2);cursor:pointer;text-decoration:underline;margin-left:4px" onclick="openSetup()">Configurer</span></div>`;
+    return;
+  }
 
-NÂÛÛÝÝÈH]È]J
-NÂÛÛÝ]TÝHÝËÓØØ[TÝ[Ê	ÙPÐIËÈ]TÝ[N	ÛÛÉË[YTÝ[N	ÜÚÜ	ÈJNÂÙ]
-	Û\Ý\]Y	ËZ\È0èÝ\	Ù]TÝX
-NÂÙ]
-	ÙÛÝ\Y]IË\pêHZ\ÙH0èÝ\	Ù]TÝX
-NÂ\ØXYH[ÙNÂXÛÛÛ\ÜÓ\Ý[[ÝJ	ØXÝ]IÊNÂBËÈ8¥ 8¥ UUÈÐQ8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ 8¥ ØY[]J
-NÂÜØÜ\ØÙOÚ[
+  if (d.error) {
+    badge.className = 'badge badge-error';
+    badge.textContent = 'Erreur';
+    body.innerHTML = `<div class="error-msg">⚠️ ${d.error}</div>`;
+    return;
+  }
+
+  badge.className = 'badge badge-live';
+  badge.textContent = 'Live';
+
+  // Update overview
+  document.getElementById('ov-yt-subs').textContent = fmt(d.subscribers);
+  document.getElementById('ov-yt-views').textContent = fmt(d.total_views) + ' vues totales';
+
+  const videos = (d.recent_videos || []).map(v => `
+    <div class="recent-item" onclick="window.open('https://youtube.com/watch?v=${v.id}','_blank')">
+      ${v.thumbnail ? `<img class="recent-thumb" src="${v.thumbnail}" onerror="this.style.display='none'">` : '<div class="recent-thumb"></div>'}
+      <div class="recent-info">
+        <div class="recent-title">${v.title}</div>
+        <div class="recent-meta">${relDate(v.published)} · 👍 ${fmt(v.likes)} · 💬 ${fmt(v.comments)}</div>
+      </div>
+      <div class="recent-views">${fmt(v.views)}</div>
+    </div>
+  `).join('');
+
+  body.innerHTML = `
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-val" style="color:var(--yt)">${fmt(d.subscribers)}</div>
+        <div class="stat-lbl">Abonnés</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">${fmt(d.total_views)}</div>
+        <div class="stat-lbl">Vues totales</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">${fmt(d.video_count)}</div>
+        <div class="stat-lbl">Vidéos</div>
+      </div>
+    </div>
+    ${videos ? `<div class="sep"></div><div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Récents</div><div class="recent-list">${videos}</div>` : ''}
+  `;
+}
+
+// ──────────────────────────────────────────────────────────────
+// SPOTIFY
+// ──────────────────────────────────────────────────────────────
+function showSpLoading() {
+  document.getElementById('sp-body').innerHTML =
+    `<div class="skeleton" style="height:70px;margin-bottom:10px"></div>
+     <div class="skeleton" style="height:44px;margin-bottom:8px"></div>
+     <div class="skeleton" style="height:44px"></div>`;
+}
+
+function renderSpotify(d) {
+  const body = document.getElementById('sp-body');
+  const badge = document.getElementById('sp-badge');
+
+  if (!d || d.error === 'not_configured') {
+    badge.className = 'badge badge-error';
+    badge.textContent = 'Non configuré';
+    body.innerHTML = `<div class="error-msg">🔑 Client ID/Secret Spotify requis — <span style="color:var(--accent2);cursor:pointer;text-decoration:underline;margin-left:4px" onclick="openSetup()">Configurer</span></div>`;
+    return;
+  }
+
+  if (d.error) {
+    badge.className = 'badge badge-error';
+    badge.textContent = 'Erreur';
+    body.innerHTML = `<div class="error-msg">⚠️ ${d.error}</div>`;
+    return;
+  }
+
+  badge.className = 'badge badge-live';
+  badge.textContent = 'Live';
+
+  document.getElementById('ov-sp-eps').textContent = fmt(d.total_episodes);
+  document.getElementById('ov-sp-name').textContent = d.name || 'Intersection';
+
+  const episodes = (d.episodes || []).map(ep => `
+    <div class="recent-item" ${ep.url ? `onclick="window.open('${ep.url}','_blank')"` : ''}>
+      <div class="platform-icon" style="background:rgba(29,185,84,0.15);width:36px;height:36px;font-size:16px;flex-shrink:0">🎵</div>
+      <div class="recent-info">
+        <div class="recent-title">${ep.name}</div>
+        <div class="recent-meta">${relDate(ep.release_date)} · ${ep.duration}</div>
+      </div>
+    </div>
+  `).join('');
+
+  body.innerHTML = `
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-val" style="color:var(--spotify)">${fmt(d.total_episodes)}</div>
+        <div class="stat-lbl">Épisodes</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">—</div>
+        <div class="stat-lbl">Écoutes*</div>
+      </div>
+    </div>
+    ${episodes ? `<div class="sep"></div><div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Récents</div><div class="recent-list">${episodes}</div>` : ''}
+    <div class="note">ℹ️ *Les écoutes ne sont pas accessibles via l'API publique Spotify. Consultez <a href="https://podcasters.spotify.com" target="_blank" style="color:var(--accent2)">Spotify for Podcasters</a>.</div>
+  `;
+}
+
+// ──────────────────────────────────────────────────────────────
+// APPLE PODCASTS
+// ──────────────────────────────────────────────────────────────
+function showApLoading() {
+  document.getElementById('ap-body').innerHTML =
+    `<div class="skeleton" style="height:60px;margin-bottom:10px"></div>`;
+}
+
+function renderApple(d) {
+  const body = document.getElementById('ap-body');
+
+  if (!d || d.error) {
+    body.innerHTML = `<div class="error-msg">⚠️ ${d?.error || 'Indisponible'}</div>
+    <div class="note">ℹ️ Stats détaillées sur <a href="https://podcastsconnect.apple.com" target="_blank" style="color:var(--accent2)">Apple Podcasts Connect</a></div>`;
+    return;
+  }
+
+  document.getElementById('ov-ap-eps').textContent = fmt(d.track_count);
+
+  body.innerHTML = `
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-val" style="color:var(--apple)">${fmt(d.track_count)}</div>
+        <div class="stat-lbl">Épisodes indexés</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">—</div>
+        <div class="stat-lbl">Auditeurs*</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">${d.name}</div>
+    <div class="note">ℹ️ *Les stats d'écoute nécessitent <a href="https://podcastsconnect.apple.com" target="_blank" style="color:var(--accent2)">Apple Podcasts Connect</a>.</div>
+  `;
+}
+
+// ──────────────────────────────────────────────────────────────
+// GOOGLE SHEETS
+// ──────────────────────────────────────────────────────────────
+function showSheetsLoading() {
+  ['sh-spotify-body','sh-youtube-body','sh-tiktok-body','sh-episodes-body'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<div class="skeleton" style="height:70px"></div>';
+  });
+}
+
+function pills(obj, exclude=[]) {
+  return Object.entries(obj)
+    .filter(([k,v]) => v && !exclude.includes(k))
+    .map(([k,v]) => `<span class="stat-pill"><span class="pill-val">${v}</span><span class="pill-lbl">${k}</span></span>`)
+    .join('');
+}
+
+function renderSheets(d) {
+  if (!d || d.error) {
+    const msg = d?.error === 'not_configured'
+      ? `🔑 Clé API YouTube requise — <span style="color:var(--accent2);cursor:pointer;text-decoration:underline" onclick="openSetup()">Configurer</span>`
+      : `⚠️ ${d?.error || 'Erreur inconnue'}${d?.error?.includes('Sheets API') ? '<br><a href="https://console.cloud.google.com/apis/library/sheets.googleapis.com" target="_blank" style="color:var(--accent2)">→ Activer Google Sheets API</a>' : ''}`;
+    ['sh-spotify-body','sh-youtube-body','sh-tiktok-body','sh-episodes-body'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<div class="error-msg">${msg}</div>`;
+    });
+    ['sh-sp-badge','sh-yt-badge','sh-tt-badge'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.className = 'badge badge-error'; el.textContent = 'Erreur'; }
+    });
+    return;
+  }
+
+  // ── Spotify ──
+  const sp = d.spotify || {};
+  const spBody = document.getElementById('sh-spotify-body');
+  if (spBody) {
+    const plays = sp['Plays (All Time)'] || sp['Plays'] || '—';
+    const followers = sp['Followers'] || '—';
+    const plays30 = sp['Plays (30j)'] || sp['Plays30'] || '—';
+    const streams30 = sp['Streams (30j)'] || sp['Streams'] || '—';
+    const audience30 = sp['Audience (30j)'] || sp['Audience'] || '—';
+
+    document.getElementById('ov-sp-eps').textContent = plays !== '—' ? fmt(plays) : document.getElementById('ov-sp-eps').textContent;
+
+    spBody.innerHTML = `
+      <div class="stat-row">
+        <div class="stat">
+          <div class="stat-val" style="color:var(--spotify)">${fmt(plays)}</div>
+          <div class="stat-lbl">Plays (tout temps)</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">${fmt(followers)}</div>
+          <div class="stat-lbl">Followers</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">${fmt(plays30)}</div>
+          <div class="stat-lbl">Plays (30j)</div>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        ${streams30 !== '—' ? `<span class="stat-pill"><span class="pill-val">${fmt(streams30)}</span><span class="pill-lbl">Streams 30j</span></span>` : ''}
+        ${audience30 !== '—' ? `<span class="stat-pill"><span class="pill-val">${fmt(audience30)}</span><span class="pill-lbl">Audience 30j</span></span>` : ''}
+      </div>
+      <div class="source-tag">📊 Source : Google Sheets</div>`;
+  }
+
+  // ── YouTube ──
+  const yt = d.youtube || {};
+  const ytBody = document.getElementById('sh-youtube-body');
+  if (ytBody && Object.keys(yt).length) {
+    const watchTime = yt['Watch time'] || yt['Watch time h'] || '—';
+    const vuesPodcast = yt['Vues podcast'] || '—';
+    const realtime = yt['Realtime 48h'] || '—';
+    const nouveaux = yt['Nouveaux (28j)'] || yt['Nouveaux'] || '—';
+    const vues28 = yt['Vues (28j)'] || yt['Vues'] || '—';
+
+    ytBody.innerHTML = `
+      <div class="stat-row">
+        <div class="stat">
+          <div class="stat-val" style="color:var(--yt)">${fmt(vues28)}</div>
+          <div class="stat-lbl">Vues (28j)</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">${watchTime}h</div>
+          <div class="stat-lbl">Watch time</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">${fmt(realtime)}</div>
+          <div class="stat-lbl">Realtime 48h</div>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        ${nouveaux !== '—' ? `<span class="stat-pill"><span class="pill-val">+${fmt(nouveaux)}</span><span class="pill-lbl">Nouveaux abonnés 28j</span></span>` : ''}
+        ${vuesPodcast !== '—' ? `<span class="stat-pill"><span class="pill-val">${fmt(vuesPodcast)}</span><span class="pill-lbl">Vues podcast</span></span>` : ''}
+      </div>
+      <div class="source-tag">📊 Source : Google Sheets</div>`;
+  } else if (ytBody) {
+    ytBody.innerHTML = `<div class="note">ℹ️ Aucune donnée YouTube trouvée dans le sheet.</div>`;
+  }
+
+  // ── TikTok ──
+  const tt = d.tiktok || {};
+  const ttBody = document.getElementById('sh-tiktok-body');
+  if (ttBody && Object.keys(tt).length) {
+    const followers = tt['Followers'] || '—';
+    const vues7 = tt['Vues (7j)'] || '—';
+    const vues365 = tt['Vues (365j)'] || '—';
+    const likes7 = tt['Likes (7j)'] || '—';
+
+    document.getElementById('ov-tt-followers').textContent = followers !== '—' ? fmt(followers) : '—';
+
+    ttBody.innerHTML = `
+      <div class="stat-row">
+        <div class="stat">
+          <div class="stat-val" style="color:var(--tiktok)">${fmt(followers)}</div>
+          <div class="stat-lbl">Followers</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">${fmt(vues7)}</div>
+          <div class="stat-lbl">Vues (7j)</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">${fmt(vues365)}</div>
+          <div class="stat-lbl">Vues (365j)</div>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        ${likes7 !== '—' ? `<span class="stat-pill"><span class="pill-val">${fmt(likes7)}</span><span class="pill-lbl">Likes 7j</span></span>` : ''}
+        ${tt['Comments (7j)'] ? `<span class="stat-pill"><span class="pill-val">${tt['Comments (7j)']}</span><span class="pill-lbl">Commentaires 7j</span></span>` : ''}
+        ${tt['Audience M/F'] ? `<span class="stat-pill"><span class="pill-val">${tt['Audience M/F']}</span><span class="pill-lbl">Audience M/F</span></span>` : ''}
+      </div>
+      <div class="source-tag">📊 Source : Google Sheets</div>`;
+
+    // Sync manual fields
+    if (followers !== '—') document.getElementById('tt-followers').value = followers.replace(/\D/g,'');
+    if (vues365 !== '—') document.getElementById('tt-views').value = vues365.replace(/\D/g,'');
+  } else if (ttBody) {
+    ttBody.innerHTML = `<div class="note">ℹ️ Aucune donnée TikTok trouvée dans le sheet.</div>`;
+  }
+
+  // ── Top Épisodes ──
+  const eps = d.episodes || [];
+  const epBody = document.getElementById('sh-episodes-body');
+  if (epBody) {
+    if (!eps.length) {
+      epBody.innerHTML = `<div class="note">ℹ️ Aucun épisode trouvé dans le sheet.</div>`;
+    } else {
+      const headers = Object.keys(eps[0]);
+      const rows = eps.map(ep => `
+        <tr>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ep['Episode'] || ''}</td>
+          <td>${ep['Date pub'] || ''}</td>
+          <td style="font-size:11px;color:var(--text2)">${ep['Format'] || ''}</td>
+          <td class="ep-plays">${fmt(ep['Plays'] || 0)}</td>
+          <td style="color:var(--text2)">${ep['Audience'] || ''}</td>
+        </tr>`).join('');
+      epBody.innerHTML = `
+        <table class="ep-table">
+          <thead><tr>
+            <th>Épisode</th><th>Date</th><th>Format</th>
+            <th style="color:var(--spotify)">Plays</th><th>Audience</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="source-tag" style="margin-top:8px">📊 Source : Google Sheets — ${eps.length} épisodes</div>`;
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// MANUAL STATS
+// ──────────────────────────────────────────────────────────────
+async function loadManual() {
+  try {
+    const res = await fetch(`${API}/api/stats/manual`);
+    const d = await res.json();
+
+    const fields = {
+      'tt-followers': d.tiktok?.followers,
+      'tt-views': d.tiktok?.views,
+      'tt-likes': d.tiktok?.likes,
+      'tt-videos': d.tiktok?.videos,
+      'ig-followers': d.instagram?.followers,
+      'ig-posts': d.instagram?.posts,
+      'ig-reach': d.instagram?.reach,
+      'ig-reel-views': d.instagram?.reel_views,
+      'fb-followers': d.facebook?.followers,
+      'fb-reach': d.facebook?.reach,
+      'fb-reel-views': d.facebook?.reel_views,
+      'fb-engagement': d.facebook?.engagement,
+    };
+
+    for (const [id, val] of Object.entries(fields)) {
+      const el = document.getElementById(id);
+      if (el && val) el.value = val;
+    }
+
+    // Update overview
+    if (d.tiktok?.followers) document.getElementById('ov-tt-followers').textContent = fmt(d.tiktok.followers);
+    if (d.instagram?.followers) document.getElementById('ov-ig-followers').textContent = fmt(d.instagram.followers);
+    if (d.facebook?.followers) document.getElementById('ov-fb-followers').textContent = fmt(d.facebook.followers);
+
+  } catch(e) {}
+}
+
+function queueSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveManual, 800);
+}
+
+async function saveManual() {
+  const data = {
+    tiktok: {
+      followers: parseInt(document.getElementById('tt-followers').value) || 0,
+      views: parseInt(document.getElementById('tt-views').value) || 0,
+      likes: parseInt(document.getElementById('tt-likes').value) || 0,
+      videos: parseInt(document.getElementById('tt-videos').value) || 0,
+    },
+    instagram: {
+      followers: parseInt(document.getElementById('ig-followers').value) || 0,
+      posts: parseInt(document.getElementById('ig-posts').value) || 0,
+      reach: parseInt(document.getElementById('ig-reach').value) || 0,
+      reel_views: parseInt(document.getElementById('ig-reel-views').value) || 0,
+    },
+    facebook: {
+      followers: parseInt(document.getElementById('fb-followers').value) || 0,
+      reach: parseInt(document.getElementById('fb-reach').value) || 0,
+      reel_views: parseInt(document.getElementById('fb-reel-views').value) || 0,
+      engagement: parseInt(document.getElementById('fb-engagement').value) || 0,
+    }
+  };
+
+  try {
+    await fetch(`${API}/api/stats/manual`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    // Update overview
+    document.getElementById('ov-tt-followers').textContent = fmt(data.tiktok.followers);
+    document.getElementById('ov-ig-followers').textContent = fmt(data.instagram.followers);
+    document.getElementById('ov-fb-followers').textContent = fmt(data.facebook.followers);
+  } catch(e) {}
+}
+
+// ──────────────────────────────────────────────────────────────
+// SETUP MODAL
+// ──────────────────────────────────────────────────────────────
+function openSetup() {
+  document.getElementById('overlay').classList.add('open');
+  // Load current config
+  fetch(`${API}/api/config`).then(r => r.json()).then(d => {
+    document.getElementById('cfg-yt-handle').value = d.channel_handle || 'podcast-intersection';
+  }).catch(()=>{});
+}
+
+function closeSetup(e) {
+  if (!e || e.target === document.getElementById('overlay')) {
+    document.getElementById('overlay').classList.remove('open');
+  }
+}
+
+async function saveConfig() {
+  const data = {};
+
+  const ytKey = document.getElementById('cfg-yt-key').value.trim();
+  const ytHandle = document.getElementById('cfg-yt-handle').value.trim();
+  const spId = document.getElementById('cfg-sp-id').value.trim();
+  const spSecret = document.getElementById('cfg-sp-secret').value.trim();
+
+  if (ytKey)    data.youtube_api_key = ytKey;
+  if (ytHandle) data.youtube_channel_handle = ytHandle;
+  if (spId)     data.spotify_client_id = spId;
+  if (spSecret) data.spotify_client_secret = spSecret;
+
+  try {
+    await fetch(`${API}/api/config`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    closeSetup();
+    refreshAll();
+  } catch(e) {
+    alert('Impossible de contacter le serveur. Assurez-vous que app.py est en cours d\'exécution.');
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadManual();
+  // Small delay to let server start if launched simultaneously
+  setTimeout(refreshAll, 300);
+});
+</script>
+</body>
+</html>
