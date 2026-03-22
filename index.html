@@ -1,1405 +1,1018 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Intersection — Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-/* ── RESET & BASE ─────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg:        #0c0c14;
-  --bg2:       #12121f;
-  --bg3:       #1a1a2e;
-  --card:      #16162a;
-  --border:    rgba(255,255,255,0.07);
-  --text:      #e8e8f0;
-  --text2:     #8888aa;
-  --accent:    #7c3aed;
-  --accent2:   #a855f7;
-  --green:     #22c55e;
-  --red:       #ef4444;
-  --yt:        #ff0000;
-  --spotify:   #1db954;
-  --tiktok:    #ee1d52;
-  --instagram: #e1306c;
-  --apple:     #fc3c44;
-  --facebook:  #1877f2;
-  --sheets:    #0f9d58;
-  --radius:    14px;
-  --shadow:    0 4px 24px rgba(0,0,0,0.4);
-}
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  min-height: 100vh;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* ── SCROLLBAR ────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
-
-/* ── LAYOUT ───────────────────────────────────────────────── */
-.wrapper { max-width: 1280px; margin: 0 auto; padding: 0 20px 60px; }
-
-/* ── HEADER ───────────────────────────────────────────────── */
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 0 28px;
-  border-bottom: 1px solid var(--border);
-  gap: 16px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.logo-icon {
-  width: 44px; height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px;
-  box-shadow: 0 0 20px rgba(124,58,237,0.3);
-}
-
-.logo h1 {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.logo .subtitle {
-  font-size: 12px;
-  color: var(--text2);
-  margin-top: 2px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.last-updated {
-  font-size: 12px;
-  color: var(--text2);
-}
-
-.dot {
-  display: inline-block;
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--text2);
-  margin-right: 5px;
-  animation: pulse 2s infinite;
-}
-.dot.live { background: var(--green); }
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-/* ── BUTTONS ──────────────────────────────────────────────── */
-.btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  display: flex; align-items: center; gap: 6px;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: white;
-  box-shadow: 0 0 16px rgba(124,58,237,0.3);
-}
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.45); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-.btn-ghost {
-  background: var(--bg3);
-  color: var(--text2);
-  border: 1px solid var(--border);
-}
-.btn-ghost:hover { background: var(--card); color: var(--text); }
-
-.spin { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── OVERVIEW STRIP ───────────────────────────────────────── */
-.overview {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin: 28px 0;
-}
-
-.ov-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  position: relative;
-  overflow: hidden;
-}
-
-.ov-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--color, var(--accent)) 0%, transparent 60%);
-  opacity: 0.06;
-}
-
-.ov-label {
-  font-size: 11px;
-  color: var(--text2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  display: flex; align-items: center; gap: 5px;
-}
-
-.ov-value {
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -1px;
-  color: var(--text);
-}
-
-.ov-sub {
-  font-size: 11px;
-  color: var(--text2);
-  margin-top: 4px;
-}
-
-/* ── SECTION TITLE ────────────────────────────────────────── */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-  margin-top: 32px;
-}
-
-.section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text2);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-/* ── PLATFORM GRID ────────────────────────────────────────── */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 16px;
-}
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  transition: border-color 0.2s;
-}
-.card:hover { border-color: rgba(255,255,255,0.12); }
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 18px;
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(to right, rgba(255,255,255,0.02), transparent);
-}
-
-.platform-icon {
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.card-header .name {
-  font-weight: 700;
-  font-size: 15px;
-}
-
-.card-header .handle {
-  font-size: 12px;
-  color: var(--text2);
-}
-
-.badge {
-  margin-left: auto;
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.badge-live { background: rgba(34,197,94,0.15); color: var(--green); }
-.badge-manual { background: rgba(136,136,170,0.15); color: var(--text2); }
-.badge-soon { background: rgba(124,58,237,0.15); color: var(--accent2); }
-.badge-error { background: rgba(239,68,68,0.15); color: var(--red); }
-
-.card-body { padding: 16px 18px; }
-
-/* ── STAT ROW ─────────────────────────────────────────────── */
-.stat-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-
-.stat {
-  flex: 1;
-  min-width: 90px;
-  background: var(--bg2);
-  border-radius: 10px;
-  padding: 12px 14px;
-}
-
-.stat-val {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-
-.stat-lbl {
-  font-size: 11px;
-  color: var(--text2);
-  margin-top: 2px;
-}
-
-/* ── RECENT ITEMS LIST ────────────────────────────────────── */
-.recent-list { display: flex; flex-direction: column; gap: 8px; }
-
-.recent-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--bg2);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.recent-item:hover { background: var(--bg3); }
-
-.recent-thumb {
-  width: 44px; height: 44px;
-  border-radius: 6px;
-  object-fit: cover;
-  flex-shrink: 0;
-  background: var(--bg3);
-}
-
-.recent-info { flex: 1; min-width: 0; }
-.recent-title {
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.recent-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
-
-.recent-views {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text2);
-  white-space: nowrap;
-}
-
-/* ── MANUAL ENTRY ─────────────────────────────────────────── */
-.manual-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.input-group { display: flex; flex-direction: column; gap: 5px; }
-.input-group label { font-size: 11px; color: var(--text2); }
-.input-group input {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 700;
-  width: 100%;
-  transition: border-color 0.2s;
-}
-.input-group input:focus { outline: none; border-color: var(--accent); }
-.input-group input::-webkit-inner-spin-button { -webkit-appearance: none; }
-
-.save-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
-
-/* ── NOTE / ALERT ─────────────────────────────────────────── */
-.note {
-  font-size: 11px;
-  color: var(--text2);
-  background: rgba(136,136,170,0.07);
-  border-radius: 8px;
-  padding: 8px 10px;
-  margin-top: 10px;
-  display: flex; align-items: flex-start; gap: 6px;
-}
-
-.error-msg {
-  font-size: 12px;
-  color: var(--red);
-  background: rgba(239,68,68,0.08);
-  border-radius: 8px;
-  padding: 10px 12px;
-  display: flex; align-items: center; gap: 8px;
-}
-
-/* ── SETUP MODAL ──────────────────────────────────────────── */
-.overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(4px);
-  z-index: 100;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.overlay.open { display: flex; }
-
-.modal {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 28px;
-  max-width: 520px;
-  width: 100%;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
-}
-
-.modal h2 { font-size: 20px; margin-bottom: 6px; }
-.modal .desc { font-size: 13px; color: var(--text2); margin-bottom: 22px; }
-
-.setup-section { margin-bottom: 20px; }
-
-.setup-section h3 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-  display: flex; align-items: center; gap: 7px;
-}
-
-.setup-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
-.setup-field label { font-size: 12px; color: var(--text2); }
-.setup-field input {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: var(--text);
-  font-size: 13px;
-  font-family: 'Courier New', monospace;
-  transition: border-color 0.2s;
-}
-.setup-field input:focus { outline: none; border-color: var(--accent); }
-
-.how-to {
-  font-size: 11px;
-  color: var(--accent2);
-  margin-top: 4px;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-
-/* ── LOADING SKELETON ─────────────────────────────────────── */
-.skeleton {
-  background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 6px;
-}
-@keyframes shimmer { to { background-position: -200% 0; } }
-
-/* ── CHART CONTAINER ──────────────────────────────────────── */
-.chart-wrap { position: relative; height: 120px; margin-top: 12px; }
-
-/* ── SHEETS BADGE ─────────────────────────────────────────── */
-.badge-sheets { background: rgba(15,157,88,0.15); color: var(--sheets); }
-
-/* ── EPISODES TABLE ───────────────────────────────────────── */
-.ep-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-.ep-table th {
-  text-align: left; padding: 6px 8px;
-  color: var(--text2); font-weight: 600;
-  border-bottom: 1px solid var(--border);
-  text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px;
-}
-.ep-table td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
-.ep-table tr:last-child td { border-bottom: none; }
-.ep-table tr:hover td { background: var(--bg2); }
-.ep-plays { font-weight: 700; color: var(--spotify); }
-
-/* ── STAT PILL ────────────────────────────────────────────── */
-.stat-pill {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: var(--bg2); border-radius: 20px;
-  padding: 4px 10px; font-size: 12px; margin: 3px 3px 3px 0;
-}
-.stat-pill .pill-val { font-weight: 700; }
-.stat-pill .pill-lbl { color: var(--text2); font-size: 11px; }
-
-/* ── SHEETS SOURCE TAG ────────────────────────────────────── */
-.source-tag {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 10px; color: var(--sheets); opacity: 0.8;
-  margin-top: 6px;
-}
-
-/* ── SEPARATOR ────────────────────────────────────────────── */
-.sep {
-  height: 1px;
-  background: var(--border);
-  margin: 12px 0;
-}
-
-/* ── FOOTER ───────────────────────────────────────────────── */
-footer {
-  text-align: center;
-  padding: 24px 0;
-  color: var(--text2);
-  font-size: 12px;
-  border-top: 1px solid var(--border);
-  margin-top: 40px;
-}
-
-/* ── RESPONSIVE ───────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .grid { grid-template-columns: 1fr; }
-  .overview { grid-template-columns: repeat(2, 1fr); }
-  header { flex-direction: column; align-items: flex-start; }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intersection Podcast — Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-card: #1c2128;
+      --bg-card2: #21262d;
+      --border: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #484f58;
+      --spotify: #1db954;
+      --youtube: #ff4444;
+      --tiktok-c: #00f2ea;
+      --tiktok-p: #ff0050;
+      --accent: #58a6ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #00f2ea 0%, #7b2ff7 50%, #ff0050 100%);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 900; color: #fff;
+      letter-spacing: -1px;
+      flex-shrink: 0;
+    }
+    .header h1 { font-size: 17px; font-weight: 700; line-height: 1.2; }
+    .header h1 span { color: var(--text-secondary); font-weight: 400; }
+    .header-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    .last-updated { font-size: 11px; color: var(--text-muted); }
+    .refresh-btn {
+      background: var(--accent); color: #0d1117;
+      border: none; padding: 8px 16px;
+      border-radius: 6px; font-size: 13px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .refresh-btn:hover { opacity: 0.85; }
+    .refresh-btn:active { transform: scale(0.97); }
+    .refresh-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .spin { display: inline-block; }
+    .spin.active { animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── SETUP ALERT ── */
+    .setup-alert {
+      background: #1c2128; border: 1px solid #e3b341;
+      border-radius: 8px; padding: 14px 18px;
+      margin: 20px 28px 0;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .setup-alert.hidden { display: none; }
+    .setup-alert h3 { font-size: 13px; font-weight: 600; color: #e3b341; margin-bottom: 6px; }
+    .setup-alert p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+    .setup-alert code {
+      background: #0d1117; padding: 1px 5px; border-radius: 3px;
+      font-family: monospace; color: var(--accent); font-size: 11px;
+    }
+    .setup-alert-close {
+      margin-left: auto; background: none; border: none;
+      color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    /* ── MAIN ── */
+    .main { padding: 22px 28px; max-width: 1440px; margin: 0 auto; }
+
+    /* ── SECTION LABELS ── */
+    .section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.9px;
+      text-transform: uppercase; color: var(--text-muted);
+      margin-bottom: 12px; margin-top: 4px;
+    }
+
+    /* ── HERO CARDS ── */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px; margin-bottom: 20px;
+    }
+    .hero-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .hero-card:hover { border-color: #484f58; }
+    .hero-card::after {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 2.5px;
+      border-radius: 10px 10px 0 0;
+    }
+    .hero-card.sp::after  { background: var(--spotify); }
+    .hero-card.yt::after  { background: var(--youtube); }
+    .hero-card.tt::after  { background: linear-gradient(90deg, var(--tiktok-c), var(--tiktok-p)); }
+    .hero-card.bl::after  { background: var(--accent); }
+    .hero-label {
+      font-size: 11px; color: var(--text-secondary);
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot.sp  { background: var(--spotify); }
+    .dot.yt  { background: var(--youtube); }
+    .dot.tt  { background: var(--tiktok-p); }
+    .dot.acc { background: var(--accent); }
+    .hero-value {
+      font-size: 38px; font-weight: 800;
+      letter-spacing: -2px; line-height: 1;
+      margin-bottom: 6px;
+    }
+    .hero-value.sp  { color: var(--spotify); }
+    .hero-value.yt  { color: var(--youtube); }
+    .hero-value.tt  { color: var(--tiktok-c); }
+    .hero-value.acc { color: var(--accent); }
+    .hero-sub { font-size: 11px; color: var(--text-muted); }
+
+    /* ── CHART CONTAINERS ── */
+    .chart-box {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px;
+      margin-bottom: 18px;
+    }
+    .chart-head {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 14px;
+    }
+    .chart-title { font-size: 14px; font-weight: 600; }
+    .chart-sub { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
+    .canvas-wrap { position: relative; height: 220px; }
+    .canvas-wrap.sm { height: 180px; }
+    .canvas-wrap.xs { height: 130px; }
+
+    /* ── PLATFORM GRID ── */
+    .plat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px; margin-bottom: 20px;
+    }
+    .plat-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .plat-head {
+      padding: 13px 16px; display: flex;
+      align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .plat-head.sp { background: rgba(29,185,84,0.07); }
+    .plat-head.yt { background: rgba(255,68,68,0.07); }
+    .plat-head.tt { background: rgba(0,242,234,0.05); }
+    .plat-icon {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; flex-shrink: 0;
+    }
+    .plat-icon.sp { background: var(--spotify); color: #000; }
+    .plat-icon.yt { background: var(--youtube); color: #fff; }
+    .plat-icon.tt { background: #000; color: var(--tiktok-c); border: 1px solid var(--tiktok-c); }
+    .plat-name { font-size: 14px; font-weight: 700; }
+    .badge {
+      margin-left: auto; padding: 3px 9px; border-radius: 20px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
+    }
+    .badge.sp { background: rgba(29,185,84,0.15); color: var(--spotify); }
+    .badge.yt { background: rgba(255,68,68,0.15); color: var(--youtube); }
+    .badge.tt { background: rgba(0,242,234,0.12); color: var(--tiktok-c); }
+    .plat-body { padding: 14px 16px; }
+
+    /* ── METRIC ROWS ── */
+    .m-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.035);
+    }
+    .m-row:last-child { border-bottom: none; }
+    .m-lbl {
+      font-size: 12px; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 6px; flex: 1;
+    }
+    .m-period {
+      background: rgba(255,255,255,0.06); padding: 1px 5px;
+      border-radius: 3px; font-size: 10px; color: var(--text-muted);
+    }
+    .m-val { font-size: 14px; font-weight: 600; }
+    .m-val.sp  { color: var(--spotify); }
+    .m-val.yt  { color: var(--youtube); }
+    .m-val.tt  { color: var(--tiktok-c); }
+    .m-val.acc { color: var(--accent); }
+    .divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 12px 0; }
+    .sub-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;
+    }
+
+    /* ── RANK / TABLE ── */
+    .rank-item {
+      display: flex; align-items: flex-start;
+      gap: 8px; padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .rank-item:last-child { border-bottom: none; }
+    .rn {
+      min-width: 20px; height: 20px; background: rgba(255,255,255,0.07);
+      border-radius: 4px; font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); flex-shrink: 0; margin-top: 1px;
+    }
+    .rank-title {
+      font-size: 12px; color: var(--text-primary);
+      flex: 1; line-height: 1.4;
+      overflow: hidden;
+    }
+    .rank-val {
+      font-size: 12px; font-weight: 700;
+      text-align: right; flex-shrink: 0; white-space: nowrap;
+    }
+    .rank-val-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+    /* ── GENDER BAR ── */
+    .g-bar-track {
+      height: 6px; border-radius: 3px;
+      background: var(--tiktok-p); margin: 6px 0 10px; overflow: hidden;
+    }
+    .g-bar-fill {
+      height: 100%; border-radius: 3px;
+      background: var(--tiktok-c); transition: width 0.6s ease;
+    }
+    .g-labels {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--text-secondary);
+    }
+
+    /* ── EPISODES FULL TABLE ── */
+    .ep-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .ep-table th {
+      text-align: left; color: var(--text-muted); font-weight: 600;
+      padding: 6px 8px 6px 0; border-bottom: 1px solid var(--border);
+      font-size: 11px; letter-spacing: 0.3px; white-space: nowrap;
+    }
+    .ep-table td {
+      padding: 7px 8px 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--text-secondary);
+    }
+    .ep-table tr:last-child td { border-bottom: none; }
+    .ep-table tr:hover td { background: rgba(255,255,255,0.015); }
+    .ep-name { color: var(--text-primary); max-width: 320px; }
+    .ep-num { text-align: right; font-weight: 700; color: var(--text-primary); }
+    .fmt-badge {
+      display: inline-block; padding: 1px 6px; border-radius: 10px;
+      font-size: 10px; font-weight: 600;
+    }
+    .fmt-video { background: rgba(255,68,68,0.15); color: var(--youtube); }
+    .fmt-audio { background: rgba(29,185,84,0.12); color: var(--spotify); }
+
+    /* ── LOADING / ERROR ── */
+    .loading {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 60px; color: var(--text-muted); font-size: 12px; gap: 8px;
+    }
+    .err-msg {
+      text-align: center; color: var(--text-muted); font-size: 12px;
+      padding: 16px; line-height: 1.5;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center; padding: 22px 28px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted); font-size: 11px; margin-top: 8px;
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1000px) {
+      .hero-grid { grid-template-columns: repeat(2, 1fr); }
+      .plat-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .hero-grid { grid-template-columns: 1fr 1fr; }
+      .main { padding: 14px 14px; }
+      .header { padding: 12px 14px; }
+    }
+  </style>
 </head>
 <body>
 
-<div class="wrapper">
+<!-- ════════════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">I×</div>
+    <div>
+      <h1>Intersection <span>Podcast</span></h1>
+      <div class="header-sub">Stats Dashboard</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="last-updated" id="lastUpdated">— En attente</div>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAllData()">
+      <span class="spin" id="spinIcon">↻</span> Rafraîchir
+    </button>
+  </div>
+</header>
 
-  <!-- ── HEADER ──────────────────────────────────────────── -->
-  <header>
-    <div class="logo">
-      <div class="logo-icon">🎙️</div>
+<!-- ════════════════════════════════════════════════════════
+     SETUP ALERT
+════════════════════════════════════════════════════════ -->
+<div class="setup-alert hidden" id="setupAlert">
+  <span style="font-size:18px;">⚠️</span>
+  <div>
+    <h3>Configuration requise — Données non accessibles</h3>
+    <p>
+      Pour charger les données en temps réel, le Google Sheet doit être <strong>publié sur le web</strong>.<br>
+      Dans Google Sheets : <strong>Fichier → Partager → Publier sur le web</strong>
+      → sélectionner chaque onglet → format <code>CSV</code> → cliquer <strong>Publier</strong>.<br>
+      Ou rendre le sheet accessible : <strong>Partager → Toute personne avec le lien peut voir</strong>,
+      puis relancer ce fichier depuis Chrome (si connecté à Google).
+    </p>
+  </div>
+  <button class="setup-alert-close" onclick="this.parentElement.classList.add('hidden')">✕</button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- ── HERO METRICS ── -->
+  <div class="section-label">📊 Métriques clés</div>
+  <div class="hero-grid">
+    <div class="hero-card sp">
+      <div class="hero-label"><span class="dot sp"></span>Spotify — Plays all-time</div>
+      <div class="hero-value sp" id="h-sp-plays">—</div>
+      <div class="hero-sub" id="h-sp-plays-sub">chargement…</div>
+    </div>
+    <div class="hero-card yt">
+      <div class="hero-label"><span class="dot yt"></span>YouTube — Abonnés</div>
+      <div class="hero-value yt" id="h-yt-subs">—</div>
+      <div class="hero-sub" id="h-yt-subs-sub">chargement…</div>
+    </div>
+    <div class="hero-card tt">
+      <div class="hero-label"><span class="dot tt"></span>TikTok — Followers</div>
+      <div class="hero-value tt" id="h-tt-fol">—</div>
+      <div class="hero-sub" id="h-tt-fol-sub">chargement…</div>
+    </div>
+    <div class="hero-card bl">
+      <div class="hero-label"><span class="dot acc"></span>Spotify — Followers</div>
+      <div class="hero-value acc" id="h-sp-fol">—</div>
+      <div class="hero-sub" id="h-sp-fol-sub">chargement…</div>
+    </div>
+  </div>
+
+  <!-- ── TIME SERIES CHART ── -->
+  <div class="chart-box">
+    <div class="chart-head">
       <div>
-        <h1>Intersection</h1>
-        <div class="subtitle">Dashboard de rayonnement <span style="opacity:0.4;font-size:11px">v1.1</span></div>
+        <div class="chart-title">📈 Évolution des audiences dans le temps</div>
+        <div class="chart-sub">Données accumulées quotidiennement — le graphique sera de plus en plus riche</div>
       </div>
     </div>
-    <div class="header-right">
-      <span class="last-updated">
-        <span class="dot" id="statusDot"></span>
-        <span id="lastUpdated">Jamais mis à jour</span>
-      </span>
-      <button class="btn btn-ghost" onclick="openSetup()">⚙️ Configurer</button>
-      <button class="btn btn-primary" id="refreshBtn" onclick="refreshAll()">
-        <span id="refreshIcon">↻</span> Actualiser
-      </button>
-    </div>
-  </header>
-
-  <!-- ── OVERVIEW ────────────────────────────────────────── -->
-  <div class="overview">
-    <div class="ov-card" style="--color: var(--yt)">
-      <div class="ov-label">▶ Abonnés YouTube</div>
-      <div class="ov-value" id="ov-yt-subs">—</div>
-      <div class="ov-sub" id="ov-yt-views">— vues totales</div>
-    </div>
-    <div class="ov-card" style="--color: var(--spotify)">
-      <div class="ov-label">🎵 Épisodes Spotify</div>
-      <div class="ov-value" id="ov-sp-eps">—</div>
-      <div class="ov-sub" id="ov-sp-name">Intersection</div>
-    </div>
-    <div class="ov-card" style="--color: var(--tiktok)">
-      <div class="ov-label">♪ TikTok</div>
-      <div class="ov-value" id="ov-tt-followers">—</div>
-      <div class="ov-sub">Abonnés</div>
-    </div>
-    <div class="ov-card" style="--color: var(--instagram)">
-      <div class="ov-label">📸 Instagram</div>
-      <div class="ov-value" id="ov-ig-followers">—</div>
-      <div class="ov-sub">Abonnés</div>
-    </div>
-    <div class="ov-card" style="--color: var(--apple)">
-      <div class="ov-label">🍎 Apple Podcasts</div>
-      <div class="ov-value" id="ov-ap-eps">—</div>
-      <div class="ov-sub">Épisodes indexés</div>
-    </div>
-    <div class="ov-card" style="--color: var(--facebook)">
-      <div class="ov-label">👥 Facebook</div>
-      <div class="ov-value" id="ov-fb-followers">—</div>
-      <div class="ov-sub">Abonnés/Fans</div>
+    <div class="canvas-wrap" id="timeseriesWrap">
+      <canvas id="chartTimeseries"></canvas>
     </div>
   </div>
 
-  <!-- ── AUTO PLATFORMS ──────────────────────────────────── -->
-  <div class="section-header">
-    <span class="section-title">Plateformes automatiques</span>
-  </div>
-
-  <div class="grid">
-
-    <!-- YOUTUBE -->
-    <div class="card">
-      <div class="card-header">
-        <div class="platform-icon" style="background:rgba(255,0,0,0.15)">▶️</div>
-        <div>
-          <div class="name">YouTube</div>
-          <div class="handle">@podcast-intersection</div>
-        </div>
-        <span class="badge badge-live" id="yt-badge">Live</span>
-      </div>
-      <div class="card-body" id="yt-body">
-        <div class="error-msg" id="yt-nocfg">
-          🔑 Clé API YouTube requise —
-          <span style="color:var(--accent2);cursor:pointer;text-decoration:underline;margin-left:4px" onclick="openSetup()">Configurer</span>
-        </div>
+  <!-- ── COMPARATIVE CHART ── -->
+  <div class="chart-box">
+    <div class="chart-head">
+      <div>
+        <div class="chart-title">📊 Comparatif Plateformes — Followers &amp; Abonnés</div>
+        <div class="chart-sub">Audience actuelle par plateforme</div>
       </div>
     </div>
+    <div class="canvas-wrap sm">
+      <canvas id="chartComparative"></canvas>
+    </div>
+  </div>
+
+  <!-- ── PLATFORM SECTIONS ── -->
+  <div class="section-label">🎙️ Performances par plateforme</div>
+  <div class="plat-grid">
 
     <!-- SPOTIFY -->
-    <div class="card">
-      <div class="card-header">
-        <div class="platform-icon" style="background:rgba(29,185,84,0.15)">🎵</div>
-        <div>
-          <div class="name">Spotify</div>
-          <div class="handle">Intersection Podcast</div>
+    <div class="plat-card">
+      <div class="plat-head sp">
+        <div class="plat-icon sp">♪</div>
+        <span class="plat-name">Spotify</span>
+        <span class="badge sp" id="badge-sp">—</span>
+      </div>
+      <div class="plat-body">
+        <div id="spotify-metrics"><div class="loading">⟳ Chargement…</div></div>
+        <hr class="divider">
+        <div class="sub-title">🏆 Top épisodes (plays)</div>
+        <div id="spotify-top"><div class="loading">⟳</div></div>
+        <div class="canvas-wrap xs" style="margin-top:12px;">
+          <canvas id="chartSpotifyEp"></canvas>
         </div>
-        <span class="badge badge-live" id="sp-badge">Live</span>
       </div>
-      <div class="card-body" id="sp-body">
-        <div class="error-msg" id="sp-nocfg">
-          🔑 Client ID/Secret Spotify requis —
-          <span style="color:var(--accent2);cursor:pointer;text-decoration:underline;margin-left:4px" onclick="openSetup()">Configurer</span>
+    </div>
+
+    <!-- YOUTUBE -->
+    <div class="plat-card">
+      <div class="plat-head yt">
+        <div class="plat-icon yt">▶</div>
+        <span class="plat-name">YouTube</span>
+        <span class="badge yt" id="badge-yt">—</span>
+      </div>
+      <div class="plat-body">
+        <div id="youtube-metrics"><div class="loading">⟳ Chargement…</div></div>
+        <hr class="divider">
+        <div class="sub-title">🎬 Top vidéos (28 jours)</div>
+        <div id="youtube-top"><div class="loading">⟳</div></div>
+        <div class="canvas-wrap xs" style="margin-top:12px;">
+          <canvas id="chartYoutube"></canvas>
         </div>
       </div>
     </div>
-
-    <!-- APPLE PODCASTS -->
-    <div class="card">
-      <div class="card-header">
-        <div class="platform-icon" style="background:rgba(252,60,68,0.15)">🍎</div>
-        <div>
-          <div class="name">Apple Podcasts</div>
-          <div class="handle">intersection.podcast</div>
-        </div>
-        <span class="badge badge-live">Live</span>
-      </div>
-      <div class="card-body" id="ap-body">
-        <div class="skeleton" style="height:60px"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ── GOOGLE SHEETS ────────────────────────────────────── -->
-  <div class="section-header" style="margin-top:32px">
-    <span class="section-title">Google Sheets — Stats détaillées</span>
-    <span style="font-size:12px;color:var(--text2)">Mis à jour depuis ton sheet Intersection Podcast</span>
-  </div>
-
-  <div class="grid" id="sheets-grid">
-    <!-- Spotify Plays (from sheet) -->
-    <div class="card">
-      <div class="card-header">
-        <div class="platform-icon" style="background:rgba(29,185,84,0.15)">🎵</div>
-        <div>
-          <div class="name">Spotify — Plays</div>
-          <div class="handle">Données non disponibles via API publique</div>
-        </div>
-        <span class="badge badge-sheets" id="sh-sp-badge">Sheet</span>
-      </div>
-      <div class="card-body" id="sh-spotify-body">
-        <div class="skeleton" style="height:70px"></div>
-      </div>
-    </div>
-
-    <!-- YouTube enrichi (from sheet) -->
-    <div class="card">
-      <div class="card-header">
-        <div class="platform-icon" style="background:rgba(255,0,0,0.15)">▶️</div>
-        <div>
-          <div class="name">YouTube — Stats détaillées</div>
-          <div class="handle">Watch time, vues podcast, realtime</div>
-        </div>
-        <span class="badge badge-sheets" id="sh-yt-badge">Sheet</span>
-      </div>
-      <div class="card-body" id="sh-youtube-body">
-        <div class="skeleton" style="height:70px"></div>
-      </div>
-    </div>
-
-    <!-- TikTok (from sheet) -->
-    <div class="card">
-      <div class="card-header">
-        <div class="platform-icon" style="background:rgba(238,29,82,0.15)">♪</div>
-        <div>
-          <div class="name">TikTok — Stats détaillées</div>
-          <div class="handle">@intersectionpodcast</div>
-        </div>
-        <span class="badge badge-sheets" id="sh-tt-badge">Sheet</span>
-      </div>
-      <div class="card-body" id="sh-tiktok-body">
-        <div class="skeleton" style="height:70px"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Top Épisodes -->
-  <div class="card" style="margin-top:16px" id="sh-episodes-card">
-    <div class="card-header">
-      <div class="platform-icon" style="background:rgba(15,157,88,0.15)">📊</div>
-      <div>
-        <div class="name">Top Épisodes Spotify</div>
-        <div class="handle">Classement par nombre de plays</div>
-      </div>
-      <span class="badge badge-sheets">Sheet</span>
-    </div>
-    <div class="card-body" id="sh-episodes-body">
-      <div class="skeleton" style="height:120px"></div>
-    </div>
-  </div>
-
-  <!-- ── MANUAL PLATFORMS ─────────────────────────────────── -->
-  <div class="section-header" style="margin-top:32px">
-    <span class="section-title">Stats manuelles</span>
-    <span style="font-size:12px;color:var(--text2)">Instagram & Facebook (non disponibles via API)</span>
-  </div>
-
-  <div class="grid">
 
     <!-- TIKTOK -->
-    <div class="card">
-      <div class="card-header">
-        <div class="platform-icon" style="background:rgba(238,29,82,0.15)">♪</div>
-        <div>
-          <div class="name">TikTok</div>
-          <div class="handle">@intersectionpodcast</div>
-        </div>
-        <span class="badge badge-manual">Manuel</span>
+    <div class="plat-card">
+      <div class="plat-head tt">
+        <div class="plat-icon tt">TT</div>
+        <span class="plat-name">TikTok</span>
+        <span class="badge tt" id="badge-tt">—</span>
       </div>
-      <div class="card-body">
-        <div class="manual-grid">
-          <div class="input-group">
-            <label>Abonnés</label>
-            <input type="number" id="tt-followers" placeholder="0" onchange="queueSave()">
-          </div>
-          <div class="input-group">
-            <label>Vues totales</label>
-            <input type="number" id="tt-views" placeholder="0" onchange="queueSave()">
-          </div>
-          <div class="input-group">
-            <label>Likes totaux</label>
-            <input type="number" id="tt-likes" placeholder="0" onchange="queueSave()">
-          </div>
-          <div class="input-group">
-            <label>Vidéos publiées</label>
-            <input type="number" id="tt-videos" placeholder="0" onchange="queueSave()">
-          </div>
-        </div>
-        <div class="note">ℹ️ Données disponibles dans TikTok Studio → Analytiques</div>
-      </div>
-    </div>
-
-    <!-- INSTAGRAM -->
-    <div class="card">
-      <div class="card-header">
-        <div class="platform-icon" style="background:rgba(225,48,108,0.15)">📸</div>
-        <div>
-          <div class="name">Instagram</div>
-          <div class="handle">@intersection.podcast</div>
-        </div>
-        <span class="badge badge-manual">Manuel</span>
-      </div>
-      <div class="card-body">
-        <div class="manual-grid">
-          <div class="input-group">
-            <label>Abonnés</label>
-            <input type="number" id="ig-followers" placeholder="0" onchange="queueSave()">
-          </div>
-          <div class="input-group">
-            <label>Publications</label>
-            <input type="number" id="ig-posts" placeholder="0" onchange="queueSave()">
-          </div>
-          <div class="input-group">
-            <label>Portée (7j)</label>
-            <input type="number" id="ig-reach" placeholder="0" onchange="queueSave()">
-          </div>
-          <div class="input-group">
-            <label>Vues Reels</label>
-            <input type="number" id="ig-reel-views" placeholder="0" onchange="queueSave()">
-          </div>
-        </div>
-        <div class="note">ℹ️ Données dans Instagram → Insights → Votre activité</div>
-      </div>
-    </div>
-
-    <!-- FACEBOOK -->
-    <div class="card">
-      <div class="card-header">
-        <div class="platform-icon" style="background:rgba(24,119,242,0.15)">👥</div>
-        <div>
-          <div class="name">Facebook</div>
-          <div class="handle">Intersection Podcast</div>
-        </div>
-        <span class="badge badge-manual">Manuel</span>
-      </div>
-      <div class="card-body">
-        <div class="manual-grid">
-          <div class="input-group">
-            <label>Abonnés / Fans</label>
-            <input type="number" id="fb-followers" placeholder="0" onchange="queueSave()">
-          </div>
-          <div class="input-group">
-            <label>Portée (7j)</label>
-            <input type="number" id="fb-reach" placeholder="0" onchange="queueSave()">
-          </div>
-          <div class="input-group">
-            <label>Vues Reels</label>
-            <input type="number" id="fb-reel-views" placeholder="0" onchange="queueSave()">
-          </div>
-          <div class="input-group">
-            <label>Engagement</label>
-            <input type="number" id="fb-engagement" placeholder="0" onchange="queueSave()">
-          </div>
-        </div>
-        <div class="note">ℹ️ Données dans Meta Business Suite → Statistiques</div>
+      <div class="plat-body">
+        <div id="tiktok-metrics"><div class="loading">⟳ Chargement…</div></div>
+        <hr class="divider">
+        <div class="sub-title">👥 Audience — Genre</div>
+        <div id="tiktok-gender"><div class="loading">⟳</div></div>
+        <hr class="divider">
+        <div class="sub-title">🔥 Top vidéos</div>
+        <div id="tiktok-top"><div class="loading">⟳</div></div>
       </div>
     </div>
 
   </div>
 
-</div>
-
-<!-- ── SETUP MODAL ──────────────────────────────────────────── -->
-<div class="overlay" id="overlay" onclick="closeSetup(event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <h2>⚙️ Configuration des API</h2>
-    <p class="desc">Entrez vos clés API pour activer la récupération automatique des stats.</p>
-
-    <!-- YouTube -->
-    <div class="setup-section">
-      <h3 style="color:var(--yt)">▶️ YouTube Data API v3</h3>
-      <div class="setup-field">
-        <label>Clé API Google</label>
-        <input type="password" id="cfg-yt-key" placeholder="AIzaSy..." autocomplete="off">
-        <div class="how-to" onclick="window.open('https://console.developers.google.com/')">
-          → Obtenir une clé gratuite sur Google Cloud Console
-        </div>
-      </div>
-      <div class="setup-field">
-        <label>Handle de la chaîne</label>
-        <input type="text" id="cfg-yt-handle" placeholder="podcast-intersection" value="podcast-intersection">
+  <!-- ── FULL EPISODES TABLE ── -->
+  <div class="chart-box" style="margin-bottom:0;">
+    <div class="chart-head">
+      <div>
+        <div class="chart-title">📋 Tous les épisodes Spotify</div>
+        <div class="chart-sub">Classés par nombre de plays · Ep.0 inclus</div>
       </div>
     </div>
-
-    <div class="sep"></div>
-
-    <!-- Spotify -->
-    <div class="setup-section">
-      <h3 style="color:var(--spotify)">🎵 Spotify API (gratuit)</h3>
-      <div class="setup-field">
-        <label>Client ID</label>
-        <input type="password" id="cfg-sp-id" placeholder="32 caractères hex..." autocomplete="off">
-      </div>
-      <div class="setup-field">
-        <label>Client Secret</label>
-        <input type="password" id="cfg-sp-secret" placeholder="32 caractères hex..." autocomplete="off">
-        <div class="how-to" onclick="window.open('https://developer.spotify.com/dashboard')">
-          → Créer une app gratuite sur Spotify Developer Dashboard
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeSetup()">Annuler</button>
-      <button class="btn btn-primary" onclick="saveConfig()">💾 Sauvegarder & Actualiser</button>
+    <div style="overflow-x:auto;">
+      <table class="ep-table">
+        <thead>
+          <tr>
+            <th style="width:28px;">#</th>
+            <th>Épisode</th>
+            <th>Date pub</th>
+            <th>Format</th>
+            <th style="text-align:right;">Plays</th>
+            <th style="text-align:right;">Audience</th>
+          </tr>
+        </thead>
+        <tbody id="ep-tbody">
+          <tr><td colspan="6" class="loading">⟳ Chargement…</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
-</div>
 
+</main>
+
+<!-- ════════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div id="footer-date">— Dernière mise à jour : en attente</div>
+  <div style="margin-top:5px;opacity:0.5;">
+    Intersection Podcast · Dashboard v1.0 ·
+    <a href="https://docs.google.com/spreadsheets/d/1ETYPzCiedSg6mFvVAzz-ERghArVenqa1i3e5cDu3Aso/edit" target="_blank">
+      Ouvrir Google Sheet ↗
+    </a>
+  </div>
+</footer>
+
+<!-- ════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════ -->
 <script>
-// ──────────────────────────────────────────────────────────────
-// STATE
-// ──────────────────────────────────────────────────────────────
-const API = 'http://localhost:5050';
-let saveTimer = null;
-let refreshing = false;
+// ── CONFIG ──────────────────────────────────────────────
+const SHEET_ID = '1ETYPzCiedSg6mFvVAzz-ERghArVenqa1i3e5cDu3Aso';
+// Proxies CORS en cascade — file:// ne peut pas appeler Google directement
+const IS_FILE = location.protocol === 'file:';
+const PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://api.codetabs.com/v1/proxy?quest=',
+];
+// Format gviz/tq — fonctionne avec un sheet public ou publié sur le web
+const GV = (sheet) =>
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`;
 
-// ──────────────────────────────────────────────────────────────
-// UTILS
-// ──────────────────────────────────────────────────────────────
+const URLS = {
+  spotify_overview:  GV('Spotify_Overview'),
+  spotify_episodes:  GV('Spotify_Episodes'),
+  youtube_overview:  GV('YouTube_Overview'),
+  tiktok_overview:   GV('TikTok_Overview'),
+  tiktok_top:        GV('TikTok_TopVideos'),
+  chart_data:        GV('_ChartData'),
+};
+
+// ── GLOBAL STATE ─────────────────────────────────────────
+const state = {
+  spPlays: null, spFollowers: null,
+  ytSubs: null, ttFollowers: null,
+};
+const charts = {};
+
+// ── UTILS ─────────────────────────────────────────────────
 function fmt(n) {
-  if (!n && n !== 0) return '—';
-  n = parseInt(n) || 0;
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-  if (n >= 1000)    return (n / 1000).toFixed(1) + 'K';
+  if (n === null || n === undefined || isNaN(n) || n === '') return '—';
+  n = parseFloat(n);
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 10_000)    return (n / 1_000).toFixed(0) + 'k';
+  if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'k';
   return n.toLocaleString('fr-CA');
 }
 
-function relDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  const diff = Math.floor((Date.now() - d) / 86400000);
-  if (diff === 0) return "aujourd'hui";
-  if (diff === 1) return 'hier';
-  if (diff < 7)  return `il y a ${diff}j`;
-  if (diff < 30) return `il y a ${Math.floor(diff/7)}sem`;
-  return `il y a ${Math.floor(diff/30)}mois`;
-}
-
-// ──────────────────────────────────────────────────────────────
-// REFRESH ALL
-// ──────────────────────────────────────────────────────────────
-async function refreshAll() {
-  if (refreshing) return;
-  refreshing = true;
-
-  const btn = document.getElementById('refreshBtn');
-  const icon = document.getElementById('refreshIcon');
-  btn.disabled = true;
-  icon.className = 'spin';
-
-  const dot = document.getElementById('statusDot');
-  dot.className = 'dot';
-  document.getElementById('lastUpdated').textContent = 'Mise à jour...';
-
-  // Placeholders pendant le chargement
-  showYtLoading();
-  showSpLoading();
-  showApLoading();
-
-  try {
-    const res = await fetch(`${API}/api/stats/all`);
-    const data = await res.json();
-
-    renderYoutube(data.platforms.youtube);
-    renderSpotify(data.platforms.spotify);
-    renderApple(data.platforms.apple);
-
-    // Manual stats already loaded
-    const ts = new Date(data.timestamp);
-    document.getElementById('lastUpdated').textContent =
-      'Mis à jour à ' + ts.toLocaleTimeString('fr-CA', {hour:'2-digit', minute:'2-digit'});
-    dot.className = 'dot live';
-  } catch(e) {
-    document.getElementById('lastUpdated').textContent = 'Erreur de connexion — serveur en marche?';
-    dot.className = 'dot';
-  }
-
-  btn.disabled = false;
-  icon.className = '';
-  refreshing = false;
-}
-
-// ──────────────────────────────────────────────────────────────
-// YOUTUBE
-// ──────────────────────────────────────────────────────────────
-function showYtLoading() {
-  document.getElementById('yt-body').innerHTML =
-    `<div class="skeleton" style="height:70px;margin-bottom:10px"></div>
-     <div class="skeleton" style="height:44px;margin-bottom:8px"></div>
-     <div class="skeleton" style="height:44px;margin-bottom:8px"></div>
-     <div class="skeleton" style="height:44px"></div>`;
-}
-
-function renderYoutube(d) {
-  const body = document.getElementById('yt-body');
-  const badge = document.getElementById('yt-badge');
-
-  if (!d || d.error === 'not_configured') {
-    badge.className = 'badge badge-error';
-    badge.textContent = 'Non configuré';
-    body.innerHTML = `<div class="error-msg">🔑 Clé API YouTube requise — <span style="color:var(--accent2);cursor:pointer;text-decoration:underline;margin-left:4px" onclick="openSetup()">Configurer</span></div>`;
-    return;
-  }
-
-  if (d.error) {
-    badge.className = 'badge badge-error';
-    badge.textContent = 'Erreur';
-    body.innerHTML = `<div class="error-msg">⚠️ ${d.error}</div>`;
-    return;
-  }
-
-  badge.className = 'badge badge-live';
-  badge.textContent = 'Live';
-
-  // Update overview
-  document.getElementById('ov-yt-subs').textContent = fmt(d.subscribers);
-  document.getElementById('ov-yt-views').textContent = fmt(d.total_views) + ' vues totales';
-
-  const videos = (d.recent_videos || []).map(v => `
-    <div class="recent-item" onclick="window.open('https://youtube.com/watch?v=${v.id}','_blank')">
-      ${v.thumbnail ? `<img class="recent-thumb" src="${v.thumbnail}" onerror="this.style.display='none'">` : '<div class="recent-thumb"></div>'}
-      <div class="recent-info">
-        <div class="recent-title">${v.title}</div>
-        <div class="recent-meta">${relDate(v.published)} · 👍 ${fmt(v.likes)} · 💬 ${fmt(v.comments)}</div>
-      </div>
-      <div class="recent-views">${fmt(v.views)}</div>
-    </div>
-  `).join('');
-
-  body.innerHTML = `
-    <div class="stat-row">
-      <div class="stat">
-        <div class="stat-val" style="color:var(--yt)">${fmt(d.subscribers)}</div>
-        <div class="stat-lbl">Abonnés</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val">${fmt(d.total_views)}</div>
-        <div class="stat-lbl">Vues totales</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val">${fmt(d.video_count)}</div>
-        <div class="stat-lbl">Vidéos</div>
-      </div>
-    </div>
-    ${videos ? `<div class="sep"></div><div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Récents</div><div class="recent-list">${videos}</div>` : ''}
-  `;
-}
-
-// ──────────────────────────────────────────────────────────────
-// SPOTIFY
-// ──────────────────────────────────────────────────────────────
-function showSpLoading() {
-  document.getElementById('sp-body').innerHTML =
-    `<div class="skeleton" style="height:70px;margin-bottom:10px"></div>
-     <div class="skeleton" style="height:44px;margin-bottom:8px"></div>
-     <div class="skeleton" style="height:44px"></div>`;
-}
-
-function renderSpotify(d) {
-  const body = document.getElementById('sp-body');
-  const badge = document.getElementById('sp-badge');
-
-  if (!d || d.error === 'not_configured') {
-    badge.className = 'badge badge-error';
-    badge.textContent = 'Non configuré';
-    body.innerHTML = `<div class="error-msg">🔑 Client ID/Secret Spotify requis — <span style="color:var(--accent2);cursor:pointer;text-decoration:underline;margin-left:4px" onclick="openSetup()">Configurer</span></div>`;
-    return;
-  }
-
-  if (d.error) {
-    badge.className = 'badge badge-error';
-    badge.textContent = 'Erreur';
-    body.innerHTML = `<div class="error-msg">⚠️ ${d.error}</div>`;
-    return;
-  }
-
-  badge.className = 'badge badge-live';
-  badge.textContent = 'Live';
-
-  document.getElementById('ov-sp-eps').textContent = fmt(d.total_episodes);
-  document.getElementById('ov-sp-name').textContent = d.name || 'Intersection';
-
-  const episodes = (d.episodes || []).map(ep => `
-    <div class="recent-item" ${ep.url ? `onclick="window.open('${ep.url}','_blank')"` : ''}>
-      <div class="platform-icon" style="background:rgba(29,185,84,0.15);width:36px;height:36px;font-size:16px;flex-shrink:0">🎵</div>
-      <div class="recent-info">
-        <div class="recent-title">${ep.name}</div>
-        <div class="recent-meta">${relDate(ep.release_date)} · ${ep.duration}</div>
-      </div>
-    </div>
-  `).join('');
-
-  body.innerHTML = `
-    <div class="stat-row">
-      <div class="stat">
-        <div class="stat-val" style="color:var(--spotify)">${fmt(d.total_episodes)}</div>
-        <div class="stat-lbl">Épisodes</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val">—</div>
-        <div class="stat-lbl">Écoutes*</div>
-      </div>
-    </div>
-    ${episodes ? `<div class="sep"></div><div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Récents</div><div class="recent-list">${episodes}</div>` : ''}
-    <div class="note">ℹ️ *Les écoutes ne sont pas accessibles via l'API publique Spotify. Consultez <a href="https://podcasters.spotify.com" target="_blank" style="color:var(--accent2)">Spotify for Podcasters</a>.</div>
-  `;
-}
-
-// ──────────────────────────────────────────────────────────────
-// APPLE PODCASTS
-// ──────────────────────────────────────────────────────────────
-function showApLoading() {
-  document.getElementById('ap-body').innerHTML =
-    `<div class="skeleton" style="height:60px;margin-bottom:10px"></div>`;
-}
-
-function renderApple(d) {
-  const body = document.getElementById('ap-body');
-
-  if (!d || d.error) {
-    body.innerHTML = `<div class="error-msg">⚠️ ${d?.error || 'Indisponible'}</div>
-    <div class="note">ℹ️ Stats détaillées sur <a href="https://podcastsconnect.apple.com" target="_blank" style="color:var(--accent2)">Apple Podcasts Connect</a></div>`;
-    return;
-  }
-
-  document.getElementById('ov-ap-eps').textContent = fmt(d.track_count);
-
-  body.innerHTML = `
-    <div class="stat-row">
-      <div class="stat">
-        <div class="stat-val" style="color:var(--apple)">${fmt(d.track_count)}</div>
-        <div class="stat-lbl">Épisodes indexés</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val">—</div>
-        <div class="stat-lbl">Auditeurs*</div>
-      </div>
-    </div>
-    <div style="font-size:12px;color:var(--text2);margin-top:8px">${d.name}</div>
-    <div class="note">ℹ️ *Les stats d'écoute nécessitent <a href="https://podcastsconnect.apple.com" target="_blank" style="color:var(--accent2)">Apple Podcasts Connect</a>.</div>
-  `;
-}
-
-// ──────────────────────────────────────────────────────────────
-// GOOGLE SHEETS
-// ──────────────────────────────────────────────────────────────
-function showSheetsLoading() {
-  ['sh-spotify-body','sh-youtube-body','sh-tiktok-body','sh-episodes-body'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = '<div class="skeleton" style="height:70px"></div>';
+function parseCSVText(text) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      complete: r => resolve(r.data),
+      error: e => reject(e),
+    });
   });
 }
 
-function pills(obj, exclude=[]) {
-  return Object.entries(obj)
-    .filter(([k,v]) => v && !exclude.includes(k))
-    .map(([k,v]) => `<span class="stat-pill"><span class="pill-val">${v}</span><span class="pill-lbl">${k}</span></span>`)
-    .join('');
+async function fetchCSV(url) {
+  // 1. Tenter l'accès direct (fonctionne sur localhost ou si Google autorise le CORS)
+  try {
+    const res = await fetch(url);
+    if (res.ok) return parseCSVText(await res.text());
+  } catch (_) { /* CORS ou réseau — on passe aux proxies */ }
+
+  // 2. Proxies en cascade (file://, Netlify, partout où CORS bloque)
+  let lastErr;
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy + encodeURIComponent(url));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      if (text.startsWith('{') && text.includes('error')) throw new Error('Proxy error');
+      return await parseCSVText(text);
+    } catch (e) {
+      lastErr = e;
+      console.warn(`[proxy failed] ${proxy.split('/')[2]}:`, e.message);
+    }
+  }
+  throw lastErr;
 }
 
-function renderSheets(d) {
-  if (!d || d.error) {
-    const msg = d?.error === 'not_configured'
-      ? `🔑 Clé API YouTube requise — <span style="color:var(--accent2);cursor:pointer;text-decoration:underline" onclick="openSetup()">Configurer</span>`
-      : `⚠️ ${d?.error || 'Erreur inconnue'}${d?.error?.includes('Sheets API') ? '<br><a href="https://console.cloud.google.com/apis/library/sheets.googleapis.com" target="_blank" style="color:var(--accent2)">→ Activer Google Sheets API</a>' : ''}`;
-    ['sh-spotify-body','sh-youtube-body','sh-tiktok-body','sh-episodes-body'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = `<div class="error-msg">${msg}</div>`;
+// Find first row where `col` matches `key` (case-insensitive trim)
+function findRow(rows, col, key) {
+  return rows.find(r => (r[col] || '').trim().toLowerCase() === key.trim().toLowerCase());
+}
+function getVal(rows, col, key) {
+  const r = findRow(rows, col, key);
+  return r ? parseFloat(r.Valeur) : null;
+}
+// For rows with same metric name but different period
+function getValByPeriod(rows, metricName, period) {
+  const r = rows.find(r =>
+    (r.Metrique || '').trim().toLowerCase() === metricName.toLowerCase() &&
+    (r.Periode  || '').trim().toLowerCase() === period.toLowerCase()
+  );
+  return r ? parseFloat(r.Valeur) : null;
+}
+
+function mRow(label, value, period = '', cls = '') {
+  const v = (value === null || value === undefined || isNaN(value))
+    ? '—'
+    : (typeof value === 'string' ? value : fmt(value));
+  return `<div class="m-row">
+    <span class="m-lbl">${label}${period ? `<span class="m-period">${period}</span>` : ''}</span>
+    <span class="m-val ${cls}">${v}</span>
+  </div>`;
+}
+
+function rankItem(rank, title, mainVal, subVal = '', valCls = '') {
+  return `<div class="rank-item">
+    <span class="rn">${rank}</span>
+    <div class="rank-title">${title}</div>
+    <div style="text-align:right;flex-shrink:0;">
+      <div class="rank-val ${valCls}">${fmt(mainVal)}</div>
+      ${subVal ? `<div class="rank-val-sub">${subVal}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function showSetupAlert() {
+  document.getElementById('setupAlert').classList.remove('hidden');
+}
+
+// ── SPOTIFY OVERVIEW ─────────────────────────────────────
+async function loadSpotifyOverview() {
+  try {
+    const rows = await fetchCSV(URLS.spotify_overview);
+    const colName = 'test'; // odd column name in Spotify tab
+    const plays    = getVal(rows, colName, 'Plays total all-time');
+    const fol      = getVal(rows, colName, 'Followers');
+    const plays30  = getVal(rows, colName, 'Plays');
+    const streams  = getVal(rows, colName, 'Streams');
+    const audience = getVal(rows, colName, 'Audience size');
+    const eps      = getVal(rows, colName, 'Total episodes');
+    const consump  = getVal(rows, colName, 'Consumption hours');
+
+    state.spPlays     = plays;
+    state.spFollowers = fol;
+
+    set('h-sp-plays',     fmt(plays));
+    set('h-sp-plays-sub', `${fmt(plays30)} plays · 30 derniers jours`);
+    set('h-sp-fol',       fmt(fol));
+    set('h-sp-fol-sub',   `${fmt(eps)} épisodes publiés`);
+    set('badge-sp',       `${fmt(plays30)} plays/30j`);
+
+    set('spotify-metrics', [
+      mRow('Plays all-time', plays, '', 'sp'),
+      mRow('Followers', fol, 'all time', 'sp'),
+      mRow('Plays', plays30, '30 jours', 'sp'),
+      mRow('Streams', streams, '30 jours'),
+      mRow('Heures écoutées', consump, '30 jours'),
+      mRow('Audience', audience, '30 jours'),
+      mRow('Épisodes total', eps, ''),
+    ].join(''));
+  } catch (e) {
+    console.error('[Spotify Overview]', e);
+    set('spotify-metrics', `<div class="err-msg">Données non disponibles.<br>Voir configuration ci-dessus.</div>`);
+    showSetupAlert();
+  }
+}
+
+// ── SPOTIFY EPISODES ─────────────────────────────────────
+async function loadSpotifyEpisodes() {
+  try {
+    const rows = await fetchCSV(URLS.spotify_episodes);
+    const sorted = [...rows].sort((a, b) => parseFloat(b.Plays||0) - parseFloat(a.Plays||0));
+
+    // Top 6 excluant Ep.0 (intro purement technique)
+    const top = sorted.filter(e => !e.Episode?.startsWith('Ep.0')).slice(0, 6);
+    set('spotify-top', top.map((ep, i) => {
+      const title = (ep.Episode || '').replace(/^Ep\.\d+(\.\d+)? - /, '');
+      return rankItem(i + 1, truncate(title, 34), ep.Plays, '', 'sp');
+    }).join(''));
+
+    // Full table
+    const tbody = sorted.map((ep, i) => {
+      const fmt_badge = ep.Format === 'Video'
+        ? `<span class="fmt-badge fmt-video">Vidéo</span>`
+        : `<span class="fmt-badge fmt-audio">Audio</span>`;
+      return `<tr>
+        <td><span class="rn">${i+1}</span></td>
+        <td class="ep-name">${ep.Episode || '—'}</td>
+        <td style="white-space:nowrap;color:var(--text-muted);">${ep.Date_pub || ''}</td>
+        <td>${fmt_badge}</td>
+        <td class="ep-num sp" style="color:var(--spotify);">${fmt(ep.Plays)}</td>
+        <td class="ep-num" style="color:var(--text-secondary);">${fmt(ep.Audience)}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('ep-tbody').innerHTML = tbody;
+
+    // Bar chart (top 8, sans Ep.0)
+    const chart8 = sorted.filter(e => !e.Episode?.startsWith('Ep.0')).slice(0, 8);
+    buildChart('chartSpotifyEp', 'bar', {
+      labels: chart8.map(e => truncate((e.Episode||'').replace(/^Ep\.\d+(\.\d+)? - /, ''), 18)),
+      datasets: [{
+        data: chart8.map(e => parseFloat(e.Plays||0)),
+        backgroundColor: 'rgba(29,185,84,0.75)',
+        borderColor: '#1db954',
+        borderWidth: 1,
+        borderRadius: 5,
+      }],
+    }, {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#484f58', font: { size: 9 }, maxRotation: 40 }, grid: { color: 'rgba(255,255,255,0.03)' } },
+        y: { ticks: { color: '#484f58', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      },
     });
-    ['sh-sp-badge','sh-yt-badge','sh-tt-badge'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.className = 'badge badge-error'; el.textContent = 'Erreur'; }
-    });
-    return;
+  } catch (e) {
+    console.error('[Spotify Episodes]', e);
+    set('spotify-top', `<div class="err-msg">Non disponible</div>`);
+    showSetupAlert();
   }
+}
 
-  // ── Spotify ──
-  const sp = d.spotify || {};
-  const spBody = document.getElementById('sh-spotify-body');
-  if (spBody) {
-    const plays = sp['Plays (All Time)'] || sp['Plays'] || '—';
-    const followers = sp['Followers'] || '—';
-    const plays30 = sp['Plays (30j)'] || sp['Plays30'] || '—';
-    const streams30 = sp['Streams (30j)'] || sp['Streams'] || '—';
-    const audience30 = sp['Audience (30j)'] || sp['Audience'] || '—';
+// ── YOUTUBE ───────────────────────────────────────────────
+async function loadYouTube() {
+  try {
+    const rows = await fetchCSV(URLS.youtube_overview);
+    const subs     = getVal(rows, 'Metrique', 'Abonnes total');
+    const newSubs  = getVal(rows, 'Metrique', 'Abonnes gagnes');
+    const views28  = getVal(rows, 'Metrique', 'Vues');
+    const watchT   = getVal(rows, 'Metrique', 'Watch time heures');
+    const rt48     = getVal(rows, 'Metrique', 'Vues realtime 48h');
+    const podViews = getVal(rows, 'Metrique', 'Podcast views');
+    const podWatch = getVal(rows, 'Metrique', 'Podcast watch time heures');
 
-    document.getElementById('ov-sp-eps').textContent = plays !== '—' ? fmt(plays) : document.getElementById('ov-sp-eps').textContent;
+    state.ytSubs = subs;
+    set('h-yt-subs',     fmt(subs));
+    set('h-yt-subs-sub', `+${fmt(newSubs)} nouveaux · 28 derniers jours`);
+    set('badge-yt',      `${fmt(views28)} vues/28j`);
 
-    spBody.innerHTML = `
-      <div class="stat-row">
-        <div class="stat">
-          <div class="stat-val" style="color:var(--spotify)">${fmt(plays)}</div>
-          <div class="stat-lbl">Plays (tout temps)</div>
-        </div>
-        <div class="stat">
-          <div class="stat-val">${fmt(followers)}</div>
-          <div class="stat-lbl">Followers</div>
-        </div>
-        <div class="stat">
-          <div class="stat-val">${fmt(plays30)}</div>
-          <div class="stat-lbl">Plays (30j)</div>
-        </div>
-      </div>
-      <div style="margin-top:8px">
-        ${streams30 !== '—' ? `<span class="stat-pill"><span class="pill-val">${fmt(streams30)}</span><span class="pill-lbl">Streams 30j</span></span>` : ''}
-        ${audience30 !== '—' ? `<span class="stat-pill"><span class="pill-val">${fmt(audience30)}</span><span class="pill-lbl">Audience 30j</span></span>` : ''}
-      </div>
-      <div class="source-tag">📊 Source : Google Sheets</div>`;
-  }
+    set('youtube-metrics', [
+      mRow('Abonnés total', subs, '', 'yt'),
+      mRow('Nouveaux abonnés', newSubs, '28 jours', 'yt'),
+      mRow('Vues', views28, '28 jours'),
+      mRow('Watch time', watchT !== null ? watchT + 'h' : null, '28 jours'),
+      mRow('Vues realtime', rt48, '48 heures'),
+      mRow('Vues podcast', podViews, 'section podcast'),
+      mRow('Watch time podcast', podWatch !== null ? podWatch + 'h' : null, 'section podcast'),
+    ].join(''));
 
-  // ── YouTube ──
-  const yt = d.youtube || {};
-  const ytBody = document.getElementById('sh-youtube-body');
-  if (ytBody && Object.keys(yt).length) {
-    const watchTime = yt['Watch time'] || yt['Watch time h'] || '—';
-    const vuesPodcast = yt['Vues podcast'] || '—';
-    const realtime = yt['Realtime 48h'] || '—';
-    const nouveaux = yt['Nouveaux (28j)'] || yt['Nouveaux'] || '—';
-    const vues28 = yt['Vues (28j)'] || yt['Vues'] || '—';
+    // Top videos
+    const topRows = rows.filter(r => (r.Metrique||'').startsWith('Top'));
+    if (topRows.length) {
+      set('youtube-top', topRows.map((v, i) => {
+        const title = (v.Metrique || '').replace(/^Top\d+ - /, '');
+        return rankItem(i + 1, truncate(title, 36), v.Valeur, `${v.Periode}`, 'yt');
+      }).join(''));
 
-    ytBody.innerHTML = `
-      <div class="stat-row">
-        <div class="stat">
-          <div class="stat-val" style="color:var(--yt)">${fmt(vues28)}</div>
-          <div class="stat-lbl">Vues (28j)</div>
-        </div>
-        <div class="stat">
-          <div class="stat-val">${watchTime}h</div>
-          <div class="stat-lbl">Watch time</div>
-        </div>
-        <div class="stat">
-          <div class="stat-val">${fmt(realtime)}</div>
-          <div class="stat-lbl">Realtime 48h</div>
-        </div>
-      </div>
-      <div style="margin-top:8px">
-        ${nouveaux !== '—' ? `<span class="stat-pill"><span class="pill-val">+${fmt(nouveaux)}</span><span class="pill-lbl">Nouveaux abonnés 28j</span></span>` : ''}
-        ${vuesPodcast !== '—' ? `<span class="stat-pill"><span class="pill-val">${fmt(vuesPodcast)}</span><span class="pill-lbl">Vues podcast</span></span>` : ''}
-      </div>
-      <div class="source-tag">📊 Source : Google Sheets</div>`;
-  } else if (ytBody) {
-    ytBody.innerHTML = `<div class="note">ℹ️ Aucune donnée YouTube trouvée dans le sheet.</div>`;
-  }
-
-  // ── TikTok ──
-  const tt = d.tiktok || {};
-  const ttBody = document.getElementById('sh-tiktok-body');
-  if (ttBody && Object.keys(tt).length) {
-    const followers = tt['Followers'] || '—';
-    const vues7 = tt['Vues (7j)'] || '—';
-    const vues365 = tt['Vues (365j)'] || '—';
-    const likes7 = tt['Likes (7j)'] || '—';
-
-    document.getElementById('ov-tt-followers').textContent = followers !== '—' ? fmt(followers) : '—';
-
-    ttBody.innerHTML = `
-      <div class="stat-row">
-        <div class="stat">
-          <div class="stat-val" style="color:var(--tiktok)">${fmt(followers)}</div>
-          <div class="stat-lbl">Followers</div>
-        </div>
-        <div class="stat">
-          <div class="stat-val">${fmt(vues7)}</div>
-          <div class="stat-lbl">Vues (7j)</div>
-        </div>
-        <div class="stat">
-          <div class="stat-val">${fmt(vues365)}</div>
-          <div class="stat-lbl">Vues (365j)</div>
-        </div>
-      </div>
-      <div style="margin-top:8px">
-        ${likes7 !== '—' ? `<span class="stat-pill"><span class="pill-val">${fmt(likes7)}</span><span class="pill-lbl">Likes 7j</span></span>` : ''}
-        ${tt['Comments (7j)'] ? `<span class="stat-pill"><span class="pill-val">${tt['Comments (7j)']}</span><span class="pill-lbl">Commentaires 7j</span></span>` : ''}
-        ${tt['Audience M/F'] ? `<span class="stat-pill"><span class="pill-val">${tt['Audience M/F']}</span><span class="pill-lbl">Audience M/F</span></span>` : ''}
-      </div>
-      <div class="source-tag">📊 Source : Google Sheets</div>`;
-
-    // Sync manual fields
-    if (followers !== '—') document.getElementById('tt-followers').value = followers.replace(/\D/g,'');
-    if (vues365 !== '—') document.getElementById('tt-views').value = vues365.replace(/\D/g,'');
-  } else if (ttBody) {
-    ttBody.innerHTML = `<div class="note">ℹ️ Aucune donnée TikTok trouvée dans le sheet.</div>`;
-  }
-
-  // ── Top Épisodes ──
-  const eps = d.episodes || [];
-  const epBody = document.getElementById('sh-episodes-body');
-  if (epBody) {
-    if (!eps.length) {
-      epBody.innerHTML = `<div class="note">ℹ️ Aucun épisode trouvé dans le sheet.</div>`;
+      buildChart('chartYoutube', 'bar', {
+        labels: topRows.map(v => truncate((v.Metrique||'').replace(/^Top\d+ - /, ''), 22)),
+        datasets: [{
+          data: topRows.map(v => parseFloat(v.Valeur||0)),
+          backgroundColor: 'rgba(255,68,68,0.75)',
+          borderColor: '#ff4444',
+          borderWidth: 1,
+          borderRadius: 5,
+        }],
+      }, {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#484f58', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+          y: { ticks: { color: '#8b949e', font: { size: 9 } }, grid: { display: false } },
+        },
+      });
     } else {
-      const headers = Object.keys(eps[0]);
-      const rows = eps.map(ep => `
-        <tr>
-          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ep['Episode'] || ''}</td>
-          <td>${ep['Date pub'] || ''}</td>
-          <td style="font-size:11px;color:var(--text2)">${ep['Format'] || ''}</td>
-          <td class="ep-plays">${fmt(ep['Plays'] || 0)}</td>
-          <td style="color:var(--text2)">${ep['Audience'] || ''}</td>
-        </tr>`).join('');
-      epBody.innerHTML = `
-        <table class="ep-table">
-          <thead><tr>
-            <th>Épisode</th><th>Date</th><th>Format</th>
-            <th style="color:var(--spotify)">Plays</th><th>Audience</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-        <div class="source-tag" style="margin-top:8px">📊 Source : Google Sheets — ${eps.length} épisodes</div>`;
+      set('youtube-top', '<div class="err-msg">Pas encore de données top vidéos.</div>');
     }
+  } catch (e) {
+    console.error('[YouTube]', e);
+    set('youtube-metrics', `<div class="err-msg">Données non disponibles.</div>`);
+    showSetupAlert();
   }
 }
 
-// ──────────────────────────────────────────────────────────────
-// MANUAL STATS
-// ──────────────────────────────────────────────────────────────
-async function loadManual() {
+// ── TIKTOK OVERVIEW ───────────────────────────────────────
+async function loadTikTok() {
   try {
-    const res = await fetch(`${API}/api/stats/manual`);
-    const d = await res.json();
+    const rows = await fetchCSV(URLS.tiktok_overview);
+    const fol      = getVal(rows, 'Metrique', 'Followers total');
+    const netFol   = getVal(rows, 'Metrique', 'Net followers');
+    const vues7    = getValByPeriod(rows, 'Video views', 'Last 7 days');
+    const vues365  = getValByPeriod(rows, 'Video views', 'Last 365 days');
+    const likes7   = getValByPeriod(rows, 'Likes', 'Last 7 days');
+    const likes365 = getValByPeriod(rows, 'Likes', 'Last 365 days');
+    const comm365  = getValByPeriod(rows, 'Comments', 'Last 365 days');
+    const shares   = getVal(rows, 'Metrique', 'Shares');
+    const trafficFY = getVal(rows, 'Metrique', 'Traffic For You %');
+    const maleP    = getVal(rows, 'Metrique', 'Audience Gender Male %');
+    const femaleP  = getVal(rows, 'Metrique', 'Audience Gender Female %');
 
-    const fields = {
-      'tt-followers': d.tiktok?.followers,
-      'tt-views': d.tiktok?.views,
-      'tt-likes': d.tiktok?.likes,
-      'tt-videos': d.tiktok?.videos,
-      'ig-followers': d.instagram?.followers,
-      'ig-posts': d.instagram?.posts,
-      'ig-reach': d.instagram?.reach,
-      'ig-reel-views': d.instagram?.reel_views,
-      'fb-followers': d.facebook?.followers,
-      'fb-reach': d.facebook?.reach,
-      'fb-reel-views': d.facebook?.reel_views,
-      'fb-engagement': d.facebook?.engagement,
-    };
+    state.ttFollowers = fol;
+    set('h-tt-fol',     fmt(fol));
+    set('h-tt-fol-sub', `${fmt(vues7)} vues · 7 derniers jours`);
+    set('badge-tt',     `${fmt(vues365)} vues/an`);
 
-    for (const [id, val] of Object.entries(fields)) {
-      const el = document.getElementById(id);
-      if (el && val) el.value = val;
+    set('tiktok-metrics', [
+      mRow('Followers total', fol, '', 'tt'),
+      mRow('Vues vidéo', vues7, '7 jours', 'tt'),
+      mRow('Vues vidéo', vues365, '365 jours'),
+      mRow('Likes', likes7, '7 jours'),
+      mRow('Likes', likes365, '365 jours'),
+      mRow('Commentaires', comm365, '365 jours'),
+      mRow('Partages', shares, '365 jours'),
+      mRow('Trafic "Pour toi"', trafficFY !== null ? trafficFY + '%' : null, '365 jours'),
+    ].join(''));
+
+    // Gender bar
+    if (maleP !== null && femaleP !== null) {
+      set('tiktok-gender', `
+        <div class="g-labels">
+          <span style="color:var(--tiktok-c)">♂ Hommes — ${maleP}%</span>
+          <span style="color:var(--tiktok-p)">Femmes — ${femaleP}% ♀</span>
+        </div>
+        <div class="g-bar-track" style="margin-top:6px;">
+          <div class="g-bar-fill" style="width:${maleP}%"></div>
+        </div>
+      `);
     }
-
-    // Update overview
-    if (d.tiktok?.followers) document.getElementById('ov-tt-followers').textContent = fmt(d.tiktok.followers);
-    if (d.instagram?.followers) document.getElementById('ov-ig-followers').textContent = fmt(d.instagram.followers);
-    if (d.facebook?.followers) document.getElementById('ov-fb-followers').textContent = fmt(d.facebook.followers);
-
-  } catch(e) {}
+  } catch (e) {
+    console.error('[TikTok Overview]', e);
+    set('tiktok-metrics', `<div class="err-msg">Données non disponibles.</div>`);
+    showSetupAlert();
+  }
 }
 
-function queueSave() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveManual, 800);
+// ── TIKTOK TOP VIDEOS ─────────────────────────────────────
+async function loadTikTokTop() {
+  try {
+    const rows = await fetchCSV(URLS.tiktok_top);
+    set('tiktok-top', rows.map(v =>
+      rankItem(
+        v.Rang,
+        truncate(v.Titre || '', 38),
+        v.Vues_7j,
+        `${fmt(v.Vues_total)} total`,
+        'tt'
+      )
+    ).join(''));
+  } catch (e) {
+    console.error('[TikTok Top]', e);
+    set('tiktok-top', `<div class="err-msg">Non disponible</div>`);
+  }
 }
 
-async function saveManual() {
-  const data = {
-    tiktok: {
-      followers: parseInt(document.getElementById('tt-followers').value) || 0,
-      views: parseInt(document.getElementById('tt-views').value) || 0,
-      likes: parseInt(document.getElementById('tt-likes').value) || 0,
-      videos: parseInt(document.getElementById('tt-videos').value) || 0,
-    },
-    instagram: {
-      followers: parseInt(document.getElementById('ig-followers').value) || 0,
-      posts: parseInt(document.getElementById('ig-posts').value) || 0,
-      reach: parseInt(document.getElementById('ig-reach').value) || 0,
-      reel_views: parseInt(document.getElementById('ig-reel-views').value) || 0,
-    },
-    facebook: {
-      followers: parseInt(document.getElementById('fb-followers').value) || 0,
-      reach: parseInt(document.getElementById('fb-reach').value) || 0,
-      reel_views: parseInt(document.getElementById('fb-reel-views').value) || 0,
-      engagement: parseInt(document.getElementById('fb-engagement').value) || 0,
+// ── TIME SERIES CHART ─────────────────────────────────────
+async function loadChartData() {
+  try {
+    const rows = await fetchCSV(URLS.chart_data);
+    const labels = rows.map(r => r.Date);
+    const spData = rows.map(r => parseFloat(r['Spotify Plays (All Time)'] || 0));
+    const ytData = rows.map(r => parseFloat(r['YouTube Abonnes'] || 0));
+    const ttData = rows.map(r => parseFloat(r['TikTok Followers'] || 0));
+
+    const ptRadius = labels.length > 30 ? 0 : 4;
+    buildChart('chartTimeseries', 'line', {
+      labels,
+      datasets: [
+        {
+          label: 'Spotify Plays all-time',
+          data: spData,
+          borderColor: '#1db954',
+          backgroundColor: 'rgba(29,185,84,0.08)',
+          fill: true, tension: 0.4,
+          pointRadius: ptRadius, pointHoverRadius: 6,
+          borderWidth: 2,
+        },
+        {
+          label: 'YouTube Abonnés',
+          data: ytData,
+          borderColor: '#ff4444',
+          backgroundColor: 'rgba(255,68,68,0.08)',
+          fill: true, tension: 0.4,
+          pointRadius: ptRadius, pointHoverRadius: 6,
+          borderWidth: 2,
+        },
+        {
+          label: 'TikTok Followers',
+          data: ttData,
+          borderColor: '#00f2ea',
+          backgroundColor: 'rgba(0,242,234,0.06)',
+          fill: true, tension: 0.4,
+          pointRadius: ptRadius, pointHoverRadius: 6,
+          borderWidth: 2,
+        },
+      ],
+    }, {
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#8b949e', font: { size: 11 }, boxWidth: 12, padding: 16 } },
+        tooltip: tooltipStyle(),
+      },
+      scales: {
+        x: { ticks: { color: '#484f58', font: { size: 10 }, maxTicksLimit: 14 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#484f58', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      },
+    });
+
+    if (labels.length <= 1) {
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;';
+      note.textContent = `ℹ️ ${labels.length} point de données pour l'instant — le graphique évoluera avec les prochaines entrées quotidiennes.`;
+      document.getElementById('timeseriesWrap').after(note);
     }
+  } catch (e) {
+    console.error('[ChartData]', e);
+    document.getElementById('timeseriesWrap').innerHTML =
+      `<div class="err-msg" style="height:220px;display:flex;align-items:center;justify-content:center;">
+        📊 Données d'évolution non disponibles — assurez-vous que l'onglet <em>_ChartData</em> est publié sur le web.
+      </div>`;
+    showSetupAlert();
+  }
+}
+
+// ── COMPARATIVE CHART ─────────────────────────────────────
+function buildComparativeChart() {
+  buildChart('chartComparative', 'bar', {
+    labels: ['Spotify Followers', 'YouTube Abonnés', 'TikTok Followers'],
+    datasets: [{
+      label: 'Followers / Abonnés',
+      data: [state.spFollowers || 0, state.ytSubs || 0, state.ttFollowers || 0],
+      backgroundColor: ['rgba(29,185,84,0.8)', 'rgba(255,68,68,0.8)', 'rgba(0,242,234,0.8)'],
+      borderColor: ['#1db954', '#ff4444', '#00f2ea'],
+      borderWidth: 1.5,
+      borderRadius: 7,
+    }],
+  }, {
+    plugins: {
+      legend: { display: false },
+      tooltip: tooltipStyle(),
+    },
+    scales: {
+      x: { ticks: { color: '#8b949e', font: { size: 12, weight: '600' } }, grid: { display: false } },
+      y: { ticks: { color: '#484f58', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+    },
+  });
+}
+
+// ── CHART HELPER ──────────────────────────────────────────
+function buildChart(id, type, data, extraOptions = {}) {
+  if (charts[id]) charts[id].destroy();
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  charts[id] = new Chart(canvas, {
+    type,
+    data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 600 },
+      ...extraOptions,
+    },
+  });
+}
+
+function tooltipStyle() {
+  return {
+    backgroundColor: '#1c2128',
+    borderColor: '#30363d',
+    borderWidth: 1,
+    titleColor: '#e6edf3',
+    bodyColor: '#8b949e',
+    padding: 10,
   };
-
-  try {
-    await fetch(`${API}/api/stats/manual`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data)
-    });
-    // Update overview
-    document.getElementById('ov-tt-followers').textContent = fmt(data.tiktok.followers);
-    document.getElementById('ov-ig-followers').textContent = fmt(data.instagram.followers);
-    document.getElementById('ov-fb-followers').textContent = fmt(data.facebook.followers);
-  } catch(e) {}
 }
 
-// ──────────────────────────────────────────────────────────────
-// SETUP MODAL
-// ──────────────────────────────────────────────────────────────
-function openSetup() {
-  document.getElementById('overlay').classList.add('open');
-  // Load current config
-  fetch(`${API}/api/config`).then(r => r.json()).then(d => {
-    document.getElementById('cfg-yt-handle').value = d.channel_handle || 'podcast-intersection';
-  }).catch(()=>{});
+// ── DOM HELPERS ───────────────────────────────────────────
+function set(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+function truncate(str, n) {
+  return str.length > n ? str.substring(0, n) + '…' : str;
 }
 
-function closeSetup(e) {
-  if (!e || e.target === document.getElementById('overlay')) {
-    document.getElementById('overlay').classList.remove('open');
-  }
+// ── MAIN LOAD ─────────────────────────────────────────────
+async function loadAllData() {
+  const btn  = document.getElementById('refreshBtn');
+  const icon = document.getElementById('spinIcon');
+  btn.disabled = true;
+  icon.classList.add('active');
+  document.getElementById('setupAlert').classList.add('hidden');
+
+  // Chargement séquentiel — évite le rate-limiting des proxies CORS
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+  await loadSpotifyOverview();  await wait(300);
+  await loadSpotifyEpisodes();  await wait(300);
+  await loadYouTube();          await wait(300);
+  await loadTikTok();           await wait(300);
+  await loadTikTokTop();        await wait(300);
+  await loadChartData();
+
+  buildComparativeChart();
+
+  const now = new Date();
+  const dateStr = now.toLocaleString('fr-CA', { dateStyle: 'long', timeStyle: 'short' });
+  set('lastUpdated', `Mis à jour : ${dateStr}`);
+  set('footer-date', `Dernière mise à jour : ${dateStr}`);
+
+  btn.disabled = false;
+  icon.classList.remove('active');
 }
 
-async function saveConfig() {
-  const data = {};
-
-  const ytKey = document.getElementById('cfg-yt-key').value.trim();
-  const ytHandle = document.getElementById('cfg-yt-handle').value.trim();
-  const spId = document.getElementById('cfg-sp-id').value.trim();
-  const spSecret = document.getElementById('cfg-sp-secret').value.trim();
-
-  if (ytKey)    data.youtube_api_key = ytKey;
-  if (ytHandle) data.youtube_channel_handle = ytHandle;
-  if (spId)     data.spotify_client_id = spId;
-  if (spSecret) data.spotify_client_secret = spSecret;
-
-  try {
-    await fetch(`${API}/api/config`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data)
-    });
-    closeSetup();
-    refreshAll();
-  } catch(e) {
-    alert('Impossible de contacter le serveur. Assurez-vous que app.py est en cours d\'exécution.');
-  }
-}
-
-// ──────────────────────────────────────────────────────────────
-// INIT
-// ──────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  loadManual();
-  // Small delay to let server start if launched simultaneously
-  setTimeout(refreshAll, 300);
-});
+// ── AUTO LOAD ─────────────────────────────────────────────
+loadAllData();
 </script>
 </body>
 </html>
