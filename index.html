@@ -587,9 +587,9 @@ async function fetchCSV(url) {
   throw lastErr;
 }
 
-// Find first row where `col` matches `key` (case-insensitive trim)
+// Find LAST row where `col` matches `key` (case-insensitive trim)
 function findRow(rows, col, key) {
-  return rows.find(r => (r[col] || '').trim().toLowerCase() === key.trim().toLowerCase());
+  return rows.findLast(r => (r[col] || '').trim().toLowerCase() === key.trim().toLowerCase());
 }
 function getVal(rows, col, key) {
   const r = findRow(rows, col, key);
@@ -597,11 +597,10 @@ function getVal(rows, col, key) {
 }
 // For rows with same metric name but different period
 function getValByPeriod(rows, metricName, period) {
-  const r = rows.find(r =>
+  return rows.findLast(r =>
     (r.Metrique || '').trim().toLowerCase() === metricName.toLowerCase() &&
     (r.Periode  || '').trim().toLowerCase() === period.toLowerCase()
   );
-  return r ? parseFloat(r.Valeur) : null;
 }
 
 function mRow(label, value, period = '', cls = '') {
